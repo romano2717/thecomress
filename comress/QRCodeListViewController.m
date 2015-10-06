@@ -68,6 +68,8 @@
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
+
+        [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
     }];
 }
 
@@ -195,6 +197,14 @@
 
 - (IBAction)reportMissingQrCode:(id)sender
 {
+    if(_selectedQrCodeIndexPathsArray.count == 0)
+    {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"No missing qr codes to report." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+        
+        [alert show];
+        
+        return;
+    }
     for (NSNumber *row in _selectedQrCodeIndexPathsArray) {
         
         NSDictionary *qrCodeToReport = [_qrCodeListArray objectAtIndex:[row intValue]];

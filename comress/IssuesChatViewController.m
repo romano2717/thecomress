@@ -315,7 +315,7 @@
     
     NSNumber *clientPostId = [NSNumber numberWithInt:postId];
     NSDictionary *actionsDict = @{@"actions":[notif userInfo],@"post_id":thePostId,@"client_post_id":clientPostId};
-    BOOL issueActionBool =  [post setIssueCloseActionRemarks:actionsDict];
+    [post setIssueCloseActionRemarks:actionsDict];
     
     //close the issue
     [self continueClosingTheIssueWithDict:[notifDict objectForKey:@"dict"] status:[[notifDict valueForKey:@"status"] intValue] withActionsDict:actionsDict];

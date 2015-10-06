@@ -1861,7 +1861,7 @@
                                                             <autoresizingMask key="autoresizingMask"/>
                                                             <subviews>
                                                                 <imageView userInteractionEnabled="NO" tag="1" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="UyS-n6-qnE">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="22" height="33"/>
+                                                                    <rect key="frame" x="0.0" y="0.0" width="80" height="80"/>
                                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                                 </imageView>
                                                             </subviews>
@@ -1873,7 +1873,7 @@
                                                             </constraint>
                                                             <constraint firstAttribute="trailingMargin" secondItem="UyS-n6-qnE" secondAttribute="trailing" constant="22" id="4wO-Sv-St7"/>
                                                             <constraint firstItem="UyS-n6-qnE" firstAttribute="top" secondItem="rKW-tB-xNj" secondAttribute="top" id="817-Px-F6Y"/>
-                                                            <constraint firstAttribute="bottomMargin" secondItem="UyS-n6-qnE" secondAttribute="bottom" constant="39" id="ADK-oT-2GC"/>
+                                                            <constraint firstAttribute="bottomMargin" secondItem="UyS-n6-qnE" secondAttribute="bottom" constant="-8" id="ADK-oT-2GC"/>
                                                             <constraint firstItem="UyS-n6-qnE" firstAttribute="leading" secondItem="rKW-tB-xNj" secondAttribute="leading" id="Chy-Um-oBR"/>
                                                             <constraint firstAttribute="trailing" secondItem="UyS-n6-qnE" secondAttribute="trailing" constant="60" id="JH3-8Y-aZG">
                                                                 <variation key="widthClass=compact" constant="0.0"/>
@@ -1881,7 +1881,9 @@
                                                             <constraint firstItem="UyS-n6-qnE" firstAttribute="leading" secondItem="rKW-tB-xNj" secondAttribute="leading" id="R23-fn-aIU"/>
                                                             <constraint firstItem="UyS-n6-qnE" firstAttribute="top" secondItem="rKW-tB-xNj" secondAttribute="top" id="Rn1-MQ-Ksf"/>
                                                             <constraint firstItem="UyS-n6-qnE" firstAttribute="top" secondItem="rKW-tB-xNj" secondAttribute="top" id="Y4z-Ui-SvO"/>
-                                                            <constraint firstAttribute="trailingMargin" secondItem="UyS-n6-qnE" secondAttribute="trailing" constant="50" id="Yqg-NE-LJ3"/>
+                                                            <constraint firstAttribute="trailingMargin" secondItem="UyS-n6-qnE" secondAttribute="trailing" constant="-8" id="Yqg-NE-LJ3"/>
+                                                            <constraint firstAttribute="trailing" secondItem="UyS-n6-qnE" secondAttribute="trailing" id="c8f-Hb-9o4"/>
+                                                            <constraint firstAttribute="bottom" secondItem="UyS-n6-qnE" secondAttribute="bottom" id="kCb-M3-tf1"/>
                                                             <constraint firstItem="UyS-n6-qnE" firstAttribute="leading" secondItem="rKW-tB-xNj" secondAttribute="leading" id="nQU-W0-rdK"/>
                                                             <constraint firstAttribute="bottomMargin" secondItem="UyS-n6-qnE" secondAttribute="bottom" constant="22" id="oMZ-bU-ICb"/>
                                                             <constraint firstItem="UyS-n6-qnE" firstAttribute="leading" secondItem="rKW-tB-xNj" secondAttribute="leading" id="oUv-CE-9UM"/>
@@ -1896,6 +1898,8 @@
                                                                 <exclude reference="JH3-8Y-aZG"/>
                                                                 <exclude reference="R23-fn-aIU"/>
                                                                 <exclude reference="Y4z-Ui-SvO"/>
+                                                                <exclude reference="c8f-Hb-9o4"/>
+                                                                <exclude reference="kCb-M3-tf1"/>
                                                                 <exclude reference="oMZ-bU-ICb"/>
                                                                 <exclude reference="oUv-CE-9UM"/>
                                                                 <exclude reference="vgY-q6-udt"/>
@@ -1903,8 +1907,12 @@
                                                         </variation>
                                                         <variation key="widthClass=compact">
                                                             <mask key="constraints">
-                                                                <include reference="4wO-Sv-St7"/>
-                                                                <include reference="oMZ-bU-ICb"/>
+                                                                <exclude reference="4wO-Sv-St7"/>
+                                                                <exclude reference="ADK-oT-2GC"/>
+                                                                <exclude reference="Yqg-NE-LJ3"/>
+                                                                <include reference="c8f-Hb-9o4"/>
+                                                                <include reference="kCb-M3-tf1"/>
+                                                                <exclude reference="oMZ-bU-ICb"/>
                                                             </mask>
                                                         </variation>
                                                         <variation key="widthClass=regular">
@@ -1915,6 +1923,12 @@
                                                                 <exclude reference="JH3-8Y-aZG"/>
                                                                 <include reference="R23-fn-aIU"/>
                                                                 <include reference="vgY-q6-udt"/>
+                                                            </mask>
+                                                        </variation>
+                                                        <variation key="heightClass=compact-widthClass=compact">
+                                                            <mask key="constraints">
+                                                                <exclude reference="4wO-Sv-St7"/>
+                                                                <exclude reference="oMZ-bU-ICb"/>
                                                             </mask>
                                                         </variation>
                                                         <variation key="heightClass=regular-widthClass=regular">
@@ -2383,7 +2397,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="nfb-kB-Dqx" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3019" y="2137"/>
+            <point key="canvasLocation" x="3018" y="2137"/>
         </scene>
         <!--Preview Image-->
         <scene sceneID="Sqp-X3-r5R">
@@ -3010,11 +3024,8 @@
                                             <rect key="frame" x="0.0" y="0.0" width="76" height="86"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <imageView userInteractionEnabled="NO" tag="1" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="excellent.png" translatesAutoresizingMaskIntoConstraints="NO" id="Jcv-OL-9c8">
-                                                    <rect key="frame" x="13" y="8" width="24" height="50"/>
-                                                </imageView>
                                                 <label opaque="NO" userInteractionEnabled="NO" tag="2" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="மிக மோசமான" textAlignment="center" lineBreakMode="wordWrap" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="uEb-SY-Tni">
-                                                    <rect key="frame" x="0.0" y="66" width="50" height="17"/>
+                                                    <rect key="frame" x="0.0" y="66" width="76" height="17"/>
                                                     <constraints>
                                                         <constraint firstAttribute="height" constant="17" id="mFh-Jv-6eE"/>
                                                     </constraints>
@@ -3022,14 +3033,23 @@
                                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
+                                                <imageView userInteractionEnabled="NO" tag="1" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="excellent.png" translatesAutoresizingMaskIntoConstraints="NO" id="Jcv-OL-9c8">
+                                                    <rect key="frame" x="7" y="8" width="63" height="50"/>
+                                                </imageView>
                                             </subviews>
                                             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </view>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                         <constraints>
-                                            <constraint firstItem="Jcv-OL-9c8" firstAttribute="leading" secondItem="aIW-9U-ckF" secondAttribute="leadingMargin" constant="5" id="3ol-vi-Dbb"/>
-                                            <constraint firstItem="Jcv-OL-9c8" firstAttribute="centerX" secondItem="uEb-SY-Tni" secondAttribute="centerX" id="Rul-Xr-z11"/>
-                                            <constraint firstAttribute="trailing" secondItem="uEb-SY-Tni" secondAttribute="trailing" constant="26" id="UB5-IT-ts8"/>
+                                            <constraint firstItem="Jcv-OL-9c8" firstAttribute="leading" secondItem="aIW-9U-ckF" secondAttribute="leadingMargin" constant="-1" id="3ol-vi-Dbb">
+                                                <variation key="heightClass=compact-widthClass=compact" constant="3"/>
+                                                <variation key="heightClass=regular-widthClass=regular" constant="3"/>
+                                            </constraint>
+                                            <constraint firstItem="Jcv-OL-9c8" firstAttribute="centerX" secondItem="uEb-SY-Tni" secondAttribute="centerX" constant="0.5" id="Rul-Xr-z11"/>
+                                            <constraint firstAttribute="trailing" secondItem="uEb-SY-Tni" secondAttribute="trailing" id="UB5-IT-ts8">
+                                                <variation key="heightClass=compact-widthClass=compact" constant="0.0"/>
+                                                <variation key="heightClass=regular-widthClass=regular" constant="0.0"/>
+                                            </constraint>
                                             <constraint firstItem="Jcv-OL-9c8" firstAttribute="top" secondItem="aIW-9U-ckF" secondAttribute="topMargin" id="jyp-rs-KR9"/>
                                             <constraint firstItem="uEb-SY-Tni" firstAttribute="top" secondItem="Jcv-OL-9c8" secondAttribute="bottom" constant="8" symbolic="YES" id="lLs-ff-IX1"/>
                                             <constraint firstItem="uEb-SY-Tni" firstAttribute="leading" secondItem="aIW-9U-ckF" secondAttribute="leading" id="w4i-Sa-xHi"/>
@@ -3163,7 +3183,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="UcT-ue-Ciy" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2907" y="2627"/>
+            <point key="canvasLocation" x="-2907" y="2626"/>
         </scene>
         <!--Nearby Locations View Controller-->
         <scene sceneID="NXc-mw-Voz">
@@ -3737,8 +3757,8 @@ Please note that, by using the Town Council’s services, you signify that you h
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5Nu-GL-3XH">
-                                <rect key="frame" x="0.0" y="28" width="600" height="572"/>
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="5Nu-GL-3XH">
+                                <rect key="frame" x="0.0" y="72" width="600" height="528"/>
                                 <subviews>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="zwc-Oc-8Ip">
                                         <rect key="frame" x="0.0" y="0.0" width="600" height="800"/>
@@ -4033,13 +4053,20 @@ Please note that, by using the Town Council’s services, you signify that you h
                                     <constraint firstItem="zwc-Oc-8Ip" firstAttribute="top" secondItem="5Nu-GL-3XH" secondAttribute="top" id="0Ah-uL-gBG"/>
                                     <constraint firstItem="zwc-Oc-8Ip" firstAttribute="leading" secondItem="5Nu-GL-3XH" secondAttribute="leading" id="1Be-RV-Gd8"/>
                                     <constraint firstItem="zwc-Oc-8Ip" firstAttribute="leading" secondItem="5Nu-GL-3XH" secondAttribute="leading" id="64t-42-PW8"/>
-                                    <constraint firstAttribute="bottom" secondItem="zwc-Oc-8Ip" secondAttribute="bottom" constant="-228" id="LUI-Cq-gue"/>
+                                    <constraint firstAttribute="bottom" secondItem="zwc-Oc-8Ip" secondAttribute="bottom" constant="-228" id="LUI-Cq-gue">
+                                        <variation key="heightClass=compact-widthClass=compact" constant="-384"/>
+                                    </constraint>
                                     <constraint firstAttribute="trailing" secondItem="zwc-Oc-8Ip" secondAttribute="trailing" id="RPe-LT-raG"/>
-                                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="zwc-Oc-8Ip" secondAttribute="bottom" constant="-272" id="kgJ-2O-gIb"/>
+                                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="zwc-Oc-8Ip" secondAttribute="bottom" constant="-272" id="kgJ-2O-gIb">
+                                        <variation key="heightClass=compact-widthClass=compact" constant="-384"/>
+                                    </constraint>
                                     <constraint firstItem="zwc-Oc-8Ip" firstAttribute="centerX" secondItem="5Nu-GL-3XH" secondAttribute="centerX" id="m8V-kU-Sgm"/>
                                     <constraint firstAttribute="trailing" secondItem="zwc-Oc-8Ip" secondAttribute="trailing" id="nGi-hP-ZKt"/>
                                     <constraint firstItem="zwc-Oc-8Ip" firstAttribute="top" secondItem="5Nu-GL-3XH" secondAttribute="top" id="o45-zO-QFa"/>
                                 </constraints>
+                                <variation key="heightClass=regular-widthClass=regular" misplaced="YES">
+                                    <rect key="frame" x="0.0" y="28" width="800" height="772"/>
+                                </variation>
                                 <connections>
                                     <outlet property="delegate" destination="5MY-Ms-axb" id="hHf-ZV-sMj"/>
                                 </connections>
@@ -4047,15 +4074,33 @@ Please note that, by using the Town Council’s services, you signify that you h
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="leading" secondItem="oXf-7e-NKL" secondAttribute="leadingMargin" constant="-16" id="4qj-BZ-EcU"/>
-                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="top" secondItem="kAh-Bg-htv" secondAttribute="bottom" constant="-36" id="Cu2-Mj-k9s"/>
-                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="bottom" secondItem="ei2-vp-N1f" secondAttribute="top" id="LMl-q1-6rq"/>
+                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="leading" secondItem="oXf-7e-NKL" secondAttribute="leadingMargin" constant="-16" id="4qj-BZ-EcU">
+                                <variation key="heightClass=compact-widthClass=compact" constant="-20"/>
+                            </constraint>
+                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="top" secondItem="kAh-Bg-htv" secondAttribute="bottom" constant="8" id="Cu2-Mj-k9s">
+                                <variation key="heightClass=compact-widthClass=compact" constant="52"/>
+                            </constraint>
+                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="bottom" secondItem="ei2-vp-N1f" secondAttribute="top" id="LMl-q1-6rq">
+                                <variation key="heightClass=compact-widthClass=compact" constant="88"/>
+                            </constraint>
                             <constraint firstItem="5Nu-GL-3XH" firstAttribute="leading" secondItem="oXf-7e-NKL" secondAttribute="leading" id="YcJ-T6-1fz"/>
-                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="top" secondItem="kAh-Bg-htv" secondAttribute="bottom" constant="-36" id="ctY-ul-4hu"/>
-                            <constraint firstAttribute="trailingMargin" secondItem="5Nu-GL-3XH" secondAttribute="trailing" constant="-16" id="iP9-nK-iYe"/>
-                            <constraint firstItem="ei2-vp-N1f" firstAttribute="top" secondItem="5Nu-GL-3XH" secondAttribute="bottom" id="oUC-hA-aSj"/>
+                            <constraint firstItem="5Nu-GL-3XH" firstAttribute="top" secondItem="kAh-Bg-htv" secondAttribute="bottom" constant="8" id="ctY-ul-4hu">
+                                <variation key="heightClass=compact-widthClass=compact" constant="52"/>
+                            </constraint>
+                            <constraint firstAttribute="trailingMargin" secondItem="5Nu-GL-3XH" secondAttribute="trailing" constant="-16" id="iP9-nK-iYe">
+                                <variation key="heightClass=compact-widthClass=compact" constant="-20"/>
+                            </constraint>
+                            <constraint firstItem="ei2-vp-N1f" firstAttribute="top" secondItem="5Nu-GL-3XH" secondAttribute="bottom" id="oUC-hA-aSj">
+                                <variation key="heightClass=compact-widthClass=compact" constant="-88"/>
+                            </constraint>
                             <constraint firstAttribute="trailing" secondItem="5Nu-GL-3XH" secondAttribute="trailing" id="zYn-7l-3EU"/>
                         </constraints>
+                        <variation key="default">
+                            <mask key="constraints">
+                                <exclude reference="4qj-BZ-EcU"/>
+                                <exclude reference="iP9-nK-iYe"/>
+                            </mask>
+                        </variation>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout" top="YES"/>
                     <navigationItem key="navigationItem" id="dOk-xs-9Hx">
@@ -4108,7 +4153,7 @@ Please note that, by using the Town Council’s services, you signify that you h
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="n4Q-cb-v5y">
-                                <rect key="frame" x="0.0" y="100" width="600" height="590"/>
+                                <rect key="frame" x="0.0" y="144" width="600" height="546"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <prototypes>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="quetionsCell" rowHeight="56" id="jaJ-oQ-JWx" userLabel="questions" customClass="QuestionsTableViewCell">
@@ -4183,13 +4228,16 @@ Please note that, by using the Town Council’s services, you signify that you h
                                         </connections>
                                     </tableViewCell>
                                 </prototypes>
+                                <variation key="heightClass=regular-widthClass=regular" misplaced="YES">
+                                    <rect key="frame" x="0.0" y="100" width="800" height="790"/>
+                                </variation>
                                 <connections>
                                     <outlet property="dataSource" destination="zXP-RK-MYD" id="Yre-u1-qWv"/>
                                     <outlet property="delegate" destination="zXP-RK-MYD" id="PTu-cq-ogB"/>
                                 </connections>
                             </tableView>
                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="xHF-b7-RGS">
-                                <rect key="frame" x="181" y="28" width="239" height="29"/>
+                                <rect key="frame" x="181" y="72" width="239" height="29"/>
                                 <segments>
                                     <segment title="Survey questions"/>
                                     <segment title="Feedbacks"/>
@@ -4197,13 +4245,13 @@ Please note that, by using the Town Council’s services, you signify that you h
                                 <color key="tintColor" red="0.0" green="0.48627450979999998" blue="0.69019607839999997" alpha="1" colorSpace="calibratedRGB"/>
                             </segmentedControl>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gvo-PN-HMv" customClass="BNRDynamicTypeManagedLabel">
-                                <rect key="frame" x="238" y="72" width="35.5" height="17"/>
+                                <rect key="frame" x="238" y="116" width="35.5" height="17"/>
                                 <fontDescription key="fontDescription" style="UICTFontTextStyleSubhead"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Satisfaction rating:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="D9B-fM-TmQ" customClass="BNRDynamicTypeManagedLabel">
-                                <rect key="frame" x="16" y="72" width="214" height="20"/>
+                                <rect key="frame" x="16" y="116" width="214" height="20"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="214" id="AOm-oK-pe1"/>
                                     <constraint firstAttribute="height" constant="20" id="eUa-4h-nJ6"/>
@@ -4279,8 +4327,8 @@ Please note that, by using the Town Council’s services, you signify that you h
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cXz-hv-gNQ">
-                                <rect key="frame" x="0.0" y="72" width="600" height="528"/>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="cXz-hv-gNQ">
+                                <rect key="frame" x="0.0" y="116" width="600" height="484"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Location:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="S9r-cw-Fye" customClass="BNRDynamicTypeManagedLabel">
                                         <rect key="frame" x="8" y="8" width="584" height="15"/>
@@ -4332,8 +4380,8 @@ Please note that, by using the Town Council’s services, you signify that you h
                                         <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <tableView clipsSubviews="YES" contentMode="scaleToFill" misplaced="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="HDh-A3-j3e">
-                                        <rect key="frame" x="8" y="147" width="584" height="373"/>
+                                    <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="HDh-A3-j3e">
+                                        <rect key="frame" x="8" y="147" width="584" height="329"/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                         <connections>
                                             <outlet property="dataSource" destination="QDk-oQ-aCt" id="DVG-Ul-ygW"/>
@@ -4369,13 +4417,25 @@ Please note that, by using the Town Council’s services, you signify that you h
                         <constraints>
                             <constraint firstItem="cXz-hv-gNQ" firstAttribute="leading" secondItem="lHa-B1-SyT" secondAttribute="leadingMargin" constant="-16" id="BAF-N8-Uyx"/>
                             <constraint firstItem="cXz-hv-gNQ" firstAttribute="leading" secondItem="lHa-B1-SyT" secondAttribute="leading" id="LVw-as-WLA"/>
-                            <constraint firstItem="cXz-hv-gNQ" firstAttribute="top" secondItem="QBD-lO-jop" secondAttribute="bottom" constant="8" id="ZgX-dM-YKa"/>
+                            <constraint firstItem="cXz-hv-gNQ" firstAttribute="top" secondItem="QBD-lO-jop" secondAttribute="bottom" constant="52" id="ZgX-dM-YKa"/>
                             <constraint firstItem="cXz-hv-gNQ" firstAttribute="bottom" secondItem="1PL-0K-ucg" secondAttribute="top" id="cMn-3k-DCL"/>
                             <constraint firstAttribute="trailing" secondItem="cXz-hv-gNQ" secondAttribute="trailing" id="hGy-lN-Pyc"/>
                             <constraint firstItem="1PL-0K-ucg" firstAttribute="top" secondItem="cXz-hv-gNQ" secondAttribute="bottom" id="jK3-tO-bTO"/>
                             <constraint firstAttribute="trailingMargin" secondItem="cXz-hv-gNQ" secondAttribute="trailing" constant="-16" id="rya-jB-Xbh"/>
-                            <constraint firstItem="cXz-hv-gNQ" firstAttribute="top" secondItem="QBD-lO-jop" secondAttribute="bottom" constant="8" symbolic="YES" id="xoa-bW-Q7B"/>
+                            <constraint firstItem="cXz-hv-gNQ" firstAttribute="top" secondItem="QBD-lO-jop" secondAttribute="bottom" constant="52" id="xoa-bW-Q7B"/>
                         </constraints>
+                        <variation key="default">
+                            <mask key="constraints">
+                                <exclude reference="BAF-N8-Uyx"/>
+                                <exclude reference="rya-jB-Xbh"/>
+                            </mask>
+                        </variation>
+                        <variation key="heightClass=compact-widthClass=compact">
+                            <mask key="constraints">
+                                <exclude reference="BAF-N8-Uyx"/>
+                                <exclude reference="rya-jB-Xbh"/>
+                            </mask>
+                        </variation>
                     </view>
                     <connections>
                         <outlet property="feedBackLabel" destination="2nz-0q-f4A" id="TFG-vK-v5Q"/>
@@ -4779,6 +4839,18 @@ Please note that, by using the Town Council’s services, you signify that you h
                             <constraint firstItem="n1N-iQ-tdm" firstAttribute="leading" secondItem="4SP-kD-L3a" secondAttribute="leading" id="qD5-jW-SKM"/>
                             <constraint firstItem="n1N-iQ-tdm" firstAttribute="leading" secondItem="4SP-kD-L3a" secondAttribute="leadingMargin" constant="-16" id="xhQ-h6-5Rb"/>
                         </constraints>
+                        <variation key="default">
+                            <mask key="constraints">
+                                <exclude reference="hdC-dQ-ooh"/>
+                                <exclude reference="xhQ-h6-5Rb"/>
+                            </mask>
+                        </variation>
+                        <variation key="heightClass=compact-widthClass=compact">
+                            <mask key="constraints">
+                                <exclude reference="hdC-dQ-ooh"/>
+                                <exclude reference="xhQ-h6-5Rb"/>
+                            </mask>
+                        </variation>
                     </view>
                     <connections>
                         <outlet property="ageBtn" destination="gT8-Bx-Wol" id="K6k-hk-vXL"/>
@@ -5690,9 +5762,9 @@ Please note that, by using the Town Council’s services, you signify that you h
     </resources>
     <inferredMetricsTieBreakers>
         <segue reference="SMc-XH-H8D"/>
+        <segue reference="q2U-TG-uMs"/>
         <segue reference="wel-of-2Aw"/>
-        <segue reference="Xuv-qH-m2P"/>
+        <segue reference="Lgh-C8-ibG"/>
         <segue reference="c1E-C5-J75"/>
-        <segue reference="T57-Bj-j4u"/>
     </inferredMetricsTieBreakers>
 </document>

@@ -258,16 +258,11 @@ contract_type;
                         NSDateComponents* comps = [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:now];
                         NSDate *dueDate = [[[NSCalendar currentCalendar] dateFromComponents:comps] dateByAddingTimeInterval:3*23*59*59]; //add 3 days, default calculation in-case the post don't have a duedate(offline) mode
                         
-                         NSDate *nowAtZeroHour = [[NSCalendar currentCalendar] dateFromComponents:comps];
-                        
                         if([rsPost dateForColumn:@"dueDate"] != nil)
                             dueDate = [rsPost dateForColumn:@"dueDate"];
                         
                         int the_status = [rsPost intForColumn:@"status"];
 
-                        int daysBetween = [self daysBetween:dueDate and:nowAtZeroHour];
-                        
-                        
                         //
                         BOOL isOverdue = NO;
                         double dueDateTimeStamp = [dueDate timeIntervalSince1970];
@@ -288,15 +283,12 @@ contract_type;
                         NSDate *now = [NSDate date];
                         NSDateComponents* comps = [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:now];
                         NSDate *dueDate = [[[NSCalendar currentCalendar] dateFromComponents:comps] dateByAddingTimeInterval:3*23*59*59]; //add 3 days, default calculation in-case the post don't have a duedate(offline) mode
-                        NSDate *nowAtZeroHour = [[NSCalendar currentCalendar] dateFromComponents:comps];
+
                         
                         if([rsPost dateForColumn:@"dueDate"] != nil)
                             dueDate = [rsPost dateForColumn:@"dueDate"];
                         
                         int the_status = [rsPost intForColumn:@"status"];
-                        
-                        int daysBetween = [self daysBetween:dueDate and:nowAtZeroHour];
-                        
                         
                         //
                         BOOL isOverdue = NO;
@@ -328,14 +320,11 @@ contract_type;
                         NSDate *now = [NSDate date];
                         NSDateComponents* comps = [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:now];
                         NSDate *dueDate = [[[NSCalendar currentCalendar] dateFromComponents:comps] dateByAddingTimeInterval:3*23*59*59]; //add 3 days, default calculation in-case the post don't have a duedate(offline) mode
-                        NSDate *nowAtZeroHour = [[NSCalendar currentCalendar] dateFromComponents:comps];
                         
                         if([rsPost dateForColumn:@"dueDate"] != nil)
                             dueDate = [rsPost dateForColumn:@"dueDate"];
                         
                         int the_status = [rsPost intForColumn:@"status"];
-                        
-                        int daysBetween = [self daysBetween:dueDate and:nowAtZeroHour];
                         
                         
                         //
@@ -534,15 +523,12 @@ contract_type;
 - (NSArray *)fetchIssuesWithParamsForPM:(NSDictionary *)params forPostId:(NSNumber *)postId filterByBlock:(BOOL)filter newIssuesFirst:(BOOL)newIssuesFirst onlyOverDue:(BOOL)onlyOverDue
 {
     NSMutableString *q;
-    NSMutableString *qOverdue;
-    
     NSDate *now = [NSDate date];
     NSDateComponents* comps = [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:now];
     comps.hour = 23;
     comps.minute = 59;
     comps.second = 59;
 
-    NSDate *daysAgo = [[[NSCalendar currentCalendar] dateFromComponents:comps] dateByAddingTimeInterval:-overDueDays*23*59*59];
     //double timestampDaysAgo = [daysAgo timeIntervalSince1970] + 0.483;//retain the 0.483 coz existing data in already have 0.483 in date time
     
     //compare including time
@@ -560,14 +546,10 @@ contract_type;
                 {
                     //where supervisor_id = '%@ OR user_id = '%@' : some contractor is also the supervisor
                     q = [[NSMutableString alloc] initWithString:[NSString stringWithFormat:@"select p.post_id,client_post_id,p.dueDate,p.status,p.updated_on,bum.user_id from post p left join block_user_mapping bum on bum.block_id = p.block_id where p.block_id in (select block_id from block_user_mapping where supervisor_id = '%@' or user_id = '%@')",[myDatabase.userDictionary valueForKey:@"user_id"],[myDatabase.userDictionary valueForKey:@"user_id"]]];
-                    
-                    qOverdue = [[NSMutableString alloc] initWithString:[NSString stringWithFormat:@"select p.post_id,p.updated_on,client_post_id,bum.user_id from post p left join block_user_mapping bum on bum.block_id = p.block_id where p.block_id in (select block_id from block_user_mapping where supervisor_id = '%@') and dueDate <= '%f' and status != %@  ",[myDatabase.userDictionary valueForKey:@"user_id"], timestampDaysAgo, finishedStatus]];
                 }
                 else //user is ct_sa
                 {
                     q = [[NSMutableString alloc] initWithString:[NSString stringWithFormat:@"select p.post_id,client_post_id,p.dueDate,p.status,p.updated_on,bum.user_id from post p left join block_user_mapping bum on bum.block_id = p.block_id where p.block_id in (select block_id from block_user_mapping)"]];
-                    
-                    qOverdue = [[NSMutableString alloc] initWithString:[NSString stringWithFormat:@"select p.post_id,p.updated_on,client_post_id,bum.user_id from post p left join block_user_mapping bum on bum.block_id = p.block_id where p.block_id in (select block_id from block_user_mapping) and dueDate <= '%f' and status != %@  ", timestampDaysAgo, finishedStatus]];
                 }
             }
             else //Others
@@ -792,6 +774,38 @@ contract_type;
     }
     return postArray;
 }
+
+- (NSArray *)fetchIssuesForCurrentPMUser
+{
+    NSMutableArray *postArray = [[NSMutableArray alloc] init];
+    
+    NSMutableArray *postIdArray = [[NSMutableArray alloc] init];
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        
+        NSString *userIdString = [[NSString stringWithFormat:@"%@",[myDatabase.userDictionary valueForKey:@"user_id"]] lowercaseString];
+        
+        FMResultSet *rs = [db executeQuery:@"select client_post_id,post_id from post where lower(post_by) = ? or lower(post_by) in (select lower(user_id) from block_user_mapping where lower(supervisor_id) = ?) order by updated_on desc",userIdString,userIdString];
+        
+        while ([rs next]) {
+            [postIdArray addObject:[NSNumber numberWithInt:[rs intForColumn:@"client_post_id"]]];
+        }
+    }];
+    
+    NSDictionary *params = @{@"order":@"order by updated_on desc"};
+    
+    for (int i = 0; i < postIdArray.count; i++) {
+        
+        NSNumber *clientPostId = [postIdArray objectAtIndex:i];
+        
+        NSArray *post = [self fetchIssuesWithParams:params forPostId:clientPostId filterByBlock:NO newIssuesFirst:NO onlyOverDue:NO fromSurvey:NO];
+        
+        if(post.count > 0)
+            [postArray addObject:[post firstObject]];
+    }
+    return postArray;
+}
+
 
 - (NSArray *)fetchIssuesForPO:(NSString *)poID division:(NSString *)division
 {
@@ -1372,7 +1386,6 @@ contract_type;
         
         NSNumber *clientPostId = [dict valueForKey:@"clientPostId"];
         NSNumber *serverPostId = [dict valueForKey:@"post_id"];
-        NSString *POId = [dict valueForKey:@"POId"];
         
         if([segment isEqualToString:@"ME"])
         {

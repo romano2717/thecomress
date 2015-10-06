@@ -52,6 +52,12 @@
         [tabbarViewControllers removeObjectAtIndex:0]; //statistics
     }
     
+    //hide routine for town council users
+    if([[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"PO"] || [[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"PM"] || [[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"GM"] || [[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"SA"])
+    {
+        [tabbarViewControllers removeObjectAtIndex:1];
+    }
+    
     [self setViewControllers: tabbarViewControllers];
 }
 

@@ -52,16 +52,17 @@
     if(ReportTimeDateDouble > 0)
         ReportTime = [NSString stringWithFormat:@"Report time: %@",[_dateFormatter stringFromDate:ReportTimeDate]];
     
-
+    //hide/show print time
     if(PrintedTimeDateDouble > ReportTimeDateDouble)
         ReportTime = @"-";
     
-    if(PrintedTimeDateDouble > 0)
+    //hide/show check box
+    if(ReportTimeDateDouble > 0)
         _checkBtn.hidden = YES;
     else
         _checkBtn.hidden = NO;
     
-    
+    //check/uncheck checkbox
     if([selectedQrCodeIndexPathsArray containsObject:[NSNumber numberWithInteger:indexPath.row]])
         _checkBtn.selected = YES;
     else

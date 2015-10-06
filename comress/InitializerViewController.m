@@ -294,6 +294,9 @@
         
         NSDictionary *params = @{@"currentPage":[NSNumber numberWithInt:1], @"lastRequestTime" : jsonDate};
         
+        DDLogVerbose(@"%@",params);
+        DDLogVerbose(@"%@",[myDatabase.userDictionary valueForKey:@"guid"]);
+
         [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url,api_download_posts] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
             
             NSDictionary *dict = [responseObject objectForKey:@"PostContainer"];

@@ -491,7 +491,13 @@
                 dict = (NSDictionary *)[[self.postsArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
         }
         else if(self.segment.selectedSegmentIndex == 3)
-            dict = (NSDictionary *)[self.postsArray objectAtIndex:indexPath.row];
+        {
+            if(POisLoggedIn)
+                dict = (NSDictionary *)[self.postsArray objectAtIndex:indexPath.row];
+            else
+                dict = (NSDictionary *)[[self.postsArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
+        }
+        
             
         
         postId = [NSNumber numberWithInt:[[[dict allKeys] objectAtIndex:0] intValue]];
@@ -538,7 +544,10 @@
             //check the contract type of this post if its 6(others), change isFiltered = NO
             int contractTypeId = [[[[dict objectForKey:postId] objectForKey:@"post"] valueForKey:@"contract_type"] intValue];
             
-            ServerPostId = [[[[dict objectForKey:postId] objectForKey:@"post"] valueForKey:@"post_id"] intValue];
+            if([[[dict objectForKey:postId] objectForKey:@"post"] valueForKey:@"post_id"] != [NSNull null])
+                ServerPostId = [[[[dict objectForKey:postId] objectForKey:@"post"] valueForKey:@"post_id"] intValue];
+            else
+                ServerPostId = 0;
             
             if(contractTypeId == 6) //Others contract type, assumed segment is 'Created'
             {
@@ -672,11 +681,22 @@
             }
             else if (self.segment.selectedSegmentIndex == 3)
             {
-                self.postsArray = [[NSMutableArray alloc] initWithArray:[post fetchIssuesForCurrentUser]];
-                
-                [self saveIndexPathsOfNewPostsWithSection:NO];
-                
-                self.sectionHeaders = nil;
+                if(POisLoggedIn)
+                {
+                    self.postsArray = [[NSMutableArray alloc] initWithArray:[post fetchIssuesForCurrentUser]];
+                    
+                    [self saveIndexPathsOfNewPostsWithSection:NO];
+                    
+                    self.sectionHeaders = nil;
+                }
+                else if (PMisLoggedIn)
+                {
+                    self.postsArray = [[NSMutableArray alloc] initWithArray:[post fetchIssuesForCurrentPMUser]];
+                    
+                    [self groupPostForGroupType:@"post_by"];
+                    
+                    [self saveIndexPathsOfNewPostsWithSection:YES];
+                }
             }
             
             
@@ -923,7 +943,7 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     // Return the number of sections.
     
-    long count;
+    long count = 0;
     
     if(self.segment.selectedSegmentIndex == 0)
     {
@@ -944,7 +964,13 @@
             count = self.sectionHeaders.count;
     }
     else if (self.segment.selectedSegmentIndex == 3)
-        count = 1;
+    {
+        if(POisLoggedIn)
+            count = 1;
+        else
+            count = self.sectionHeaders.count;
+    }
+    
     
     return count;
 }
@@ -952,7 +978,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     // Return the number of rows in the section.
     
-    long count;
+    long count = 0;
     
     if(self.segment.selectedSegmentIndex == 0)
     {
@@ -978,7 +1004,13 @@
             count = [[self.postsArray objectAtIndex:section] count];
     }
     else if (self.segment.selectedSegmentIndex == 3)
-        count = self.postsArray.count;
+    {
+        if(POisLoggedIn)
+            count = self.postsArray.count;
+        else
+            count = [[self.postsArray objectAtIndex:section] count];
+    }
+    
     
     return count;
 }
@@ -992,7 +1024,7 @@
         
         NSDictionary *dict;
         
-        if(self.segment.selectedSegmentIndex == 0)
+        if(self.segment.selectedSegmentIndex == 0) //ME
         {
             if(POisLoggedIn)
                 dict = (NSDictionary *)[self.postsArray safeObjectAtIndex:indexPath.row];
@@ -1000,7 +1032,7 @@
                 dict = (NSDictionary *)[[self.postsArray safeObjectAtIndex:indexPath.section] safeObjectAtIndex:indexPath.row];
         }
         
-        else if(self.segment.selectedSegmentIndex == 1)
+        else if(self.segment.selectedSegmentIndex == 1) //OTHERS
         {
             if(PMisLoggedIn)
                 dict = [[[[self.postsArray safeObjectAtIndex:indexPath.section] firstObject] objectForKey:@"users"] safeObjectAtIndex:indexPath.row];
@@ -1008,18 +1040,19 @@
                 dict = [[self.postsArray safeObjectAtIndex:indexPath.section] safeObjectAtIndex:indexPath.row];
         }
         
-        else
+        else if(self.segment.selectedSegmentIndex == 2) //OVERDUE
         {
             if(POisLoggedIn)
                 dict = (NSDictionary *)[self.postsArray safeObjectAtIndex:indexPath.row];
             else
-            {
-                if(self.segment.selectedSegmentIndex != 3)
-                    dict = (NSDictionary *)[[self.postsArray safeObjectAtIndex:indexPath.section] safeObjectAtIndex:indexPath.row];
-                else
-                    dict = (NSDictionary *)[self.postsArray safeObjectAtIndex:indexPath.row];
-            }
-            
+                dict = (NSDictionary *)[[self.postsArray safeObjectAtIndex:indexPath.section] safeObjectAtIndex:indexPath.row];
+        }
+        else if (self.segment.selectedSegmentIndex == 3)//created
+        {
+            if(POisLoggedIn)
+                dict = (NSDictionary *)[self.postsArray safeObjectAtIndex:indexPath.row];
+            else
+                dict = (NSDictionary *)[[self.postsArray safeObjectAtIndex:indexPath.section] safeObjectAtIndex:indexPath.row];
         }
         
         
@@ -1073,7 +1106,13 @@
             return [self.sectionHeaders objectAtIndex:section];
     }
     else if(self.segment.selectedSegmentIndex == 3)
-        return nil;
+    {
+        if(POisLoggedIn)
+            return nil;
+        else
+            return [self.sectionHeaders objectAtIndex:section];
+    }
+    
         
     
     return nil;
@@ -1081,44 +1120,41 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    if(self.sectionHeaders.count > 0 && self.segment.selectedSegmentIndex != 3)
+    if(self.sectionHeaders.count > 0)
         return 42.0f;
     return 0;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
-    if(self.sectionHeaders.count > 0 && self.segment.selectedSegmentIndex != 3)
-    {
-        UIButton *btn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    
+    btn.frame = CGRectMake(0, 0, self.view.frame.size.width, 42.0f);
+    [btn setTitle:[self.sectionHeaders objectAtIndex:section] forState:UIControlStateNormal];
+    btn.backgroundColor = [UIColor lightGrayColor];
+    [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont boldSystemFontOfSize:20];
+    btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+    btn.tag = section;
+    [btn.layer setBorderWidth:0.5f];
+    [btn.layer setBorderColor:[UIColor whiteColor].CGColor];
+
+    for (int i = 0; i < sectionsWithNewCommentsArray.count; i++) {
+        NSDictionary *dict = [sectionsWithNewCommentsArray objectAtIndex:i];
         
-        btn.frame = CGRectMake(0, 0, self.view.frame.size.width, 42.0f);
-        [btn setTitle:[self.sectionHeaders objectAtIndex:section] forState:UIControlStateNormal];
-        btn.backgroundColor = [UIColor lightGrayColor];
-        [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        btn.titleLabel.font = [UIFont boldSystemFontOfSize:20];
-        btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-        btn.tag = section;
-        [btn.layer setBorderWidth:0.5f];
-        [btn.layer setBorderColor:[UIColor whiteColor].CGColor];
+        if([[dict valueForKey:@"section"] intValue] == section)
+        {
+            BadgeLabel *badge = [[BadgeLabel alloc] initWithFrame:CGRectMake(CGRectGetWidth(btn.frame) - 40, 10, 40, 40)];
+            badge.text = [NSString stringWithFormat:@"%d",[[dict valueForKey:@"newComments"] intValue]];
+            badge.backgroundColor = [UIColor blueColor];
+            badge.hasBorder = YES;
+            badge.textColor = [UIColor whiteColor];
 
-        for (int i = 0; i < sectionsWithNewCommentsArray.count; i++) {
-            NSDictionary *dict = [sectionsWithNewCommentsArray objectAtIndex:i];
-            
-            if([[dict valueForKey:@"section"] intValue] == section)
-            {
-                BadgeLabel *badge = [[BadgeLabel alloc] initWithFrame:CGRectMake(CGRectGetWidth(btn.frame) - 40, 10, 40, 40)];
-                badge.text = [NSString stringWithFormat:@"%d",[[dict valueForKey:@"newComments"] intValue]];
-                badge.backgroundColor = [UIColor blueColor];
-                badge.hasBorder = YES;
-                badge.textColor = [UIColor whiteColor];
-
-                [btn addSubview:badge];
-            }
+            [btn addSubview:badge];
         }
-        return btn;
     }
-    return nil;
+    
+    return btn;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -1159,7 +1195,13 @@
             dict = (NSDictionary *)[[self.postsArray safeObjectAtIndex:indexPath.section] safeObjectAtIndex:indexPath.row];
     }
     else if (self.segment.selectedSegmentIndex == 3)
-        dict = (NSDictionary *)[self.postsArray safeObjectAtIndex:indexPath.row];
+    {
+        if(POisLoggedIn)
+            dict = (NSDictionary *)[self.postsArray safeObjectAtIndex:indexPath.row];
+        else
+            dict = (NSDictionary *)[[self.postsArray safeObjectAtIndex:indexPath.section] safeObjectAtIndex:indexPath.row];
+    }
+    
     
     NSDictionary *topDict = (NSDictionary *)[[dict allValues] firstObject];
     NSDictionary *postDict = [topDict valueForKey:@"post"];
@@ -1314,7 +1356,13 @@
             dict = (NSDictionary *)[[self.postsArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
     }
     else if (self.segment.selectedSegmentIndex == 3)
-        dict = (NSDictionary *)[self.postsArray objectAtIndex:indexPath.row];
+    {
+        if(POisLoggedIn)
+            dict = (NSDictionary *)[self.postsArray objectAtIndex:indexPath.row];
+        else
+            dict = (NSDictionary *)[[self.postsArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
+    }
+    
     
     
     //save PO action
@@ -1326,7 +1374,7 @@
     
     NSNumber *clientPostId = [NSNumber numberWithInt:[[[dict allKeys] objectAtIndex:0] intValue]];
     NSDictionary *actionsDict = @{@"actions":[notif userInfo],@"post_id":thePostId,@"client_post_id":clientPostId};
-    BOOL issueActionBool =  [post setIssueCloseActionRemarks:actionsDict];
+    [post setIssueCloseActionRemarks:actionsDict];
     
     //close the issue
     [self setPostStatusAtIndexPath:indexPath withStatus:[NSNumber numberWithInt:4] withPostDict:dict withActionsDict:actionsDict];
@@ -1340,7 +1388,7 @@
 
 - (void)setPostStatusAtIndexPath:(NSIndexPath *)indexPath withStatus:(NSNumber *)clickedStatus withPostDict:(NSDictionary *)dict withActionsDict:(NSDictionary *)actionsDict
 {
-    NSNumber *clickedPostId;
+    NSNumber *clickedPostId = [NSNumber numberWithInt:0];
     
     if(self.segment.selectedSegmentIndex == 0)
     {
@@ -1376,8 +1424,16 @@
     }
     else if(self.segment.selectedSegmentIndex == 3)
     {
-        dict = (NSDictionary *)[self.postsArray objectAtIndex:indexPath.row];
-        clickedPostId = [NSNumber numberWithInt:[[[dict allKeys] objectAtIndex:0] intValue]];
+        if(POisLoggedIn)
+        {
+            dict = (NSDictionary *)[self.postsArray objectAtIndex:indexPath.row];
+            clickedPostId = [NSNumber numberWithInt:[[[dict allKeys] objectAtIndex:0] intValue]];
+        }
+        else
+        {
+            dict = (NSDictionary *)[[self.postsArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
+            clickedPostId = [NSNumber numberWithInt:[[[dict allKeys] objectAtIndex:0] intValue]];
+        }
     }
 
     

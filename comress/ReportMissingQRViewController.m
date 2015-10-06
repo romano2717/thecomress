@@ -31,6 +31,8 @@
     
     _qrCodeLabel.text = [NSString stringWithFormat:@"QR Code: %@",[_scannedQrCodeDict valueForKey:@"scanValue"]];
     
+    _blocksArray = [[NSMutableArray alloc] init];
+    
     [self generateData];
     
     self.lastVisibleView = _proceedBtn;
@@ -56,14 +58,26 @@
     }
 }
 
-
-
 - (void)generateData
 {
-    Blocks *blocks = [[Blocks alloc] init];
+    NSDate *now = [NSDate date];
+    NSDateComponents* comps = [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:now];
+    NSDate *nowDate = [[[NSCalendar currentCalendar] dateFromComponents:comps] dateByAddingTimeInterval:24*00*00];
     
-    _blocksArray = [[NSMutableArray alloc] init];
-    NSArray *theBlocks = [blocks fetchBlocksWithBlockId:nil];
+    NSNumber *scheduleDateEpoch = [NSNumber numberWithDouble:[nowDate timeIntervalSince1970]];
+    NSString *userId = [NSString stringWithFormat:@"%@",[myDatabase.userDictionary valueForKey:@"user_id"]];
+    
+    NSMutableArray *theBlocks = [[NSMutableArray alloc] init];
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        db.traceExecution = YES;
+        FMResultSet *rs = [db executeQuery:@"select * from blocks where block_id in (select distinct blk_id from rt_blk_schedule where schedule_date = ? and user_id = ?)",scheduleDateEpoch,userId];
+        
+        while ([rs next]) {
+            [theBlocks addObject:[rs resultDictionary]];
+        }
+        db.traceExecution = NO;
+    }];
     
     
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -110,7 +124,17 @@
 
 - (IBAction)proceed:(id)sender
 {
-    [self getAllQrCodesForBlockId:[[_selectedBlock valueForKeyPath:@"CustomObject.block_id"] intValue]];
+    if([[_selectedBlock valueForKeyPath:@"CustomObject.block_id"] intValue] > 0)
+    {
+        [self getAllQrCodesForBlockId:[[_selectedBlock valueForKeyPath:@"CustomObject.block_id"] intValue]];
+    }
+    else
+    {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"Please select a block" delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+        
+        [alert show];
+    }
+    
 }
 
 @end

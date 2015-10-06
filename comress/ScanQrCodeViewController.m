@@ -33,10 +33,14 @@
     
     
     _qrCodeTableView.rowHeight = 108.0f;
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getQrCodesForBlock) name:UIApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
+    [super viewDidAppear:animated];
+    
     [self getQrCodesForBlock];
 }
 
@@ -65,6 +69,9 @@
         });
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+        [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
+        
         DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
     }];
 }

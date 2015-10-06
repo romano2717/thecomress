@@ -182,7 +182,7 @@
     }
     
     NSDictionary *params = @{@"scheduleImageList":scheduleImageList};
-    
+
     [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url ,api_upload_schedule_image] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
         
         NSArray *AckScheduleImageObj = [responseObject objectForKey:@"AckScheduleImageObj"];
@@ -247,8 +247,10 @@
         
     NSMutableArray *scheduleList = [[NSMutableArray alloc] init];
     NSNumber *needToSync = [NSNumber numberWithInt:2];
-    NSNumber *schedulePickedUp = [NSNumber numberWithInt:3];
     NSNumber *syncFinished = [NSNumber numberWithInt:1];
+    
+    
+    NSMutableArray *scheduleIdArray = [[NSMutableArray alloc] init];
     
     __block BOOL aCompletedScheduleWasFound = NO;
     __block NSNumber *completedScheduleId;
@@ -276,13 +278,7 @@
             {
                 [scheduleList addObject:@{@"ScheduleId":ScheduleId,@"Status":Status,@"Remarks":Remarks}];
                 
-                BOOL up2 = [db executeUpdate:@"update rt_schedule_detail set sync_flag = ? where schedule_id = ?",schedulePickedUp,ScheduleId];
-                
-                if(!up2)
-                {
-                    *rollback = YES;
-                    return;
-                }
+                [scheduleIdArray addObject:ScheduleId];
             }
         }
     }];
@@ -316,6 +312,7 @@
     }
     
     NSDictionary *params = @{@"scheduleList":scheduleList};
+    
     
     isFinishedUploadingSchedule = NO;
     
@@ -375,29 +372,24 @@
     NSMutableArray *selectedCheckList = [[NSMutableArray alloc] init];
     
     NSNumber *needToSync = [NSNumber numberWithInt:2];
-    NSNumber *schedulePickedUp = [NSNumber numberWithInt:3];
     NSNumber *syncFinished = [NSNumber numberWithInt:1];
     NSNumber *yesBool = [NSNumber numberWithBool:YES];
+    
+    NSMutableArray *scheduleIdArray = [[NSMutableArray alloc] init];
     
     [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
         
         //get the checklist to upload
-        FMResultSet *rs = [db executeQuery:@"select * from rt_checklist c left join rt_schedule_detail sd on c.schedule_id =  sd.schedule_id where sd.checklist_sync_flag = ? and c.is_checked = ?",needToSync,yesBool];
+        FMResultSet *rs = [db executeQuery:@"select * from rt_checklist c left join rt_schedule_detail sd on c.schedule_id =  sd.schedule_id where sd.checklist_sync_flag = ? ",needToSync,yesBool];
         
         while ([rs next]) {
             NSNumber *CheckListId = [NSNumber numberWithInt:[rs intForColumn:@"checklist_id"]];
             NSNumber *ScheduleId = [NSNumber numberWithInt:[rs intForColumn:@"schedule_id"]];
-            NSNumber *IsCheck = [NSNumber numberWithBool:YES];
+            NSNumber *IsCheck = [NSNumber numberWithBool:[rs boolForColumn:@"is_checked"]];
             
             [selectedCheckList addObject:@{@"CheckListId":CheckListId,@"ScheduleId":ScheduleId,@"IsCheck":IsCheck}];
             
-            BOOL up = [db executeUpdate:@"update rt_schedule_detail set checklist_sync_flag = ? where schedule_id = ?",schedulePickedUp,ScheduleId];
-            
-            if(!up)
-            {
-                *rollback = YES;
-                return;
-            }
+            [scheduleIdArray addObject:ScheduleId];
         }
     }];
     
@@ -591,7 +583,7 @@
         if(fromSelf)
         {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [self nextSyncMethod];
+                [self uploadRoofCheckAccessFromSelf:fromSelf];
             });
         }
         
@@ -630,6 +622,106 @@
         if(fromSelf)
         {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self uploadRoofCheckAccessFromSelf:fromSelf];
+            });
+        }
+        
+        
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
+        
+        if(fromSelf)
+        {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self uploadRoofCheckAccessFromSelf:fromSelf];
+            });
+        }
+        
+    }];
+}
+
+
+- (void)uploadRoofCheckAccessFromSelf:(BOOL)fromSelf
+{
+    
+    NSMutableArray *roofImageList = [[NSMutableArray alloc] init];
+    
+    NSNumber *zero = [NSNumber numberWithInt:0];
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        
+        //get the roof image to upload
+        FMResultSet *rs = [db executeQuery:@"select * from rt_roof_check_image where roof_image_id = ? or roof_image_id is null limit 1",zero];
+        
+        while ([rs next]) {
+            NSNumber *CilentRoofImageId = [NSNumber numberWithInt:[rs intForColumn:@"client_roof_image_id"]];
+            NSNumber *RoofCheckSNO = [NSNumber numberWithInt:[rs intForColumn:@"roof_check_sno"]];
+            
+            NSNumber *Latitude = [NSNumber numberWithDouble:[rs doubleForColumn:@"latitude"]];
+            NSNumber *Longitude = [NSNumber numberWithDouble:[rs doubleForColumn:@"longitude"]];
+            
+            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+            NSString *documentsPath = [paths objectAtIndex:0];
+            NSString *filePath = [documentsPath stringByAppendingPathComponent:[rs stringForColumn:@"image_name"]];
+            
+            NSFileManager *fileManager = [[NSFileManager alloc] init];
+            if([fileManager fileExistsAtPath:filePath] == NO) //file does not exist
+                continue ;
+            
+            UIImage *image = [UIImage imageWithContentsOfFile:filePath];
+            NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
+            NSString *imageString = [imageData base64EncodedStringWithSeparateLines:NO];
+            
+            [roofImageList addObject:@{@"CilentRoofImageId":CilentRoofImageId,@"RoofCheckSNO":RoofCheckSNO,@"Latitude":Latitude,@"Longitude":Longitude,@"Image":imageString}];
+
+        }
+    }];
+    
+    if(roofImageList.count == 0)
+    {
+        if(fromSelf)
+        {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self nextSyncMethod];
+            });
+        }
+        
+        return;
+    }
+    
+    NSDictionary *params = @{@"roofImageList":roofImageList};
+
+    
+    [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url ,api_upload_roof_image] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        
+        NSArray *AckRoofImageObj = [responseObject objectForKey:@"AckRoofImageObj"];
+        
+        for (NSDictionary *dict in AckRoofImageObj) {
+            
+            NSNumber *CilentRoofImageId = [NSNumber numberWithInt:[[dict valueForKey:@"CilentRoofImageId"] intValue]];
+            NSString *ErrorMessage = [dict valueForKey:@"ErrorMessage"];
+            NSNumber *RoofImageId = [NSNumber numberWithInt:[[dict valueForKey:@"RoofImageId"] intValue]];
+            
+            if([ErrorMessage isEqual:[NSNull null]])
+            {
+                [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+                    
+                    BOOL up = [db executeUpdate:@"update rt_roof_check_image set roof_image_id = ? where client_roof_image_id = ?",RoofImageId,CilentRoofImageId];
+                    
+                    if(!up)
+                    {
+                        *rollback = YES;
+                        return;
+                    }
+                    
+                }];
+            }
+            
+        }
+        
+        if(fromSelf)
+        {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 [self nextSyncMethod];
             });
         }
@@ -647,6 +739,7 @@
         
     }];
 }
+
 
 - (void)nextSyncMethod
 {
@@ -707,6 +800,7 @@
     }
     
     NSDictionary *params = @{@"scheduleImageList":scheduleImageList};
+
     
     [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url ,api_upload_schedule_image] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
         
@@ -750,7 +844,6 @@
     NSMutableArray *selectedCheckList = [[NSMutableArray alloc] init];
     
     NSNumber *needToSync = [NSNumber numberWithInt:2];
-    NSNumber *schedulePickedUp = [NSNumber numberWithInt:3];
     NSNumber *syncFinished = [NSNumber numberWithInt:1];
     NSNumber *yesBool = [NSNumber numberWithBool:YES];
     
@@ -766,13 +859,7 @@
             
             [selectedCheckList addObject:@{@"CheckListId":CheckListId,@"ScheduleId":ScheduleId,@"IsCheck":IsCheck}];
             
-            BOOL up = [db executeUpdate:@"update rt_schedule_detail set checklist_sync_flag = ? where schedule_id = ?",schedulePickedUp,ScheduleId];
-            
-            if(!up)
-            {
-                *rollback = YES;
-                return;
-            }
+
         }
     }];
     
@@ -826,7 +913,6 @@
 {
     NSMutableArray *scheduleList = [[NSMutableArray alloc] init];
     NSNumber *needToSync = [NSNumber numberWithInt:2];
-    NSNumber *schedulePickedUp = [NSNumber numberWithInt:3];
     NSNumber *syncFinished = [NSNumber numberWithInt:1];
     
     [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
@@ -838,14 +924,6 @@
             NSString *Remarks = [rs stringForColumn:@"remarks"];
             
             [scheduleList addObject:@{@"ScheduleId":ScheduleId,@"Status":Status,@"Remarks":Remarks}];
-            
-            BOOL up2 = [db executeUpdate:@"update rt_schedule_detail set sync_flag = ? where schedule_id = ?",schedulePickedUp,ScheduleId];
-            
-            if(!up2)
-            {
-                *rollback = YES;
-                return;
-            }
         }
     }];
     

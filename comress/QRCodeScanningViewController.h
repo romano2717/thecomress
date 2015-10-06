@@ -21,10 +21,12 @@
 @property (nonatomic, strong) NSString *scanValue;
 @property (nonatomic, strong) MTBBarcodeScanner *scanner;
 @property (nonatomic, weak) IBOutlet UIView *previewView;
+//todo: add outlet for label in camera view and hide it after scanning
 
 
 @property (nonatomic, strong) NSDictionary *scheduleDetailDict;
 @property (nonatomic) BOOL scanQrCodeByRandom; //top right btn;
 @property (nonatomic) BOOL scanQrCodeInsideJobList;
+@property (nonatomic) BOOL scanQrCodeForRoofCheckAccess;
 
 @end

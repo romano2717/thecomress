@@ -1270,12 +1270,12 @@
                 }
                 
                 //update survey_address_id and resident_address_id
-                BOOL upSuAdds = [db executeUpdate:@"update su_survey set survey_address_id = ? where client_survey_address_id = ?",AddressId,ClientAddressId];
-                BOOL upSuAdds2 = [db executeUpdate:@"update su_survey set resident_address_id = ? where client_resident_address_id = ?",AddressId,ClientAddressId];
+                [db executeUpdate:@"update su_survey set survey_address_id = ? where client_survey_address_id = ?",AddressId,ClientAddressId];
+                [db executeUpdate:@"update su_survey set resident_address_id = ? where client_resident_address_id = ?",AddressId,ClientAddressId];
                 
                 
                 //update feedback address_id
-                BOOL feedAddId = [db executeUpdate:@"update su_feedback set address_id = ? where client_address_id = ?",AddressId,ClientAddressId];
+                [db executeUpdate:@"update su_feedback set address_id = ? where client_address_id = ?",AddressId,ClientAddressId];
             }
             
             
@@ -1818,7 +1818,7 @@
             
             [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
                 
-                BOOL upAddId;
+                BOOL upAddId = NO;
                 
                 if([ClientAddressId intValue] > 0)
                     upAddId = [db executeUpdate:@"update su_address set address_id = ? where client_address_id = ?",AddressId,ClientAddressId];

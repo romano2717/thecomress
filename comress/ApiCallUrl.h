@@ -86,6 +86,10 @@ static NSString *api_upload_missing_qr_code = @"Job/LockProcess.svc/UploadMissQR
 
 static NSString *api_upload_scanned_qr_code = @"Job/LockProcess.svc/UploadScannedQRCode";
 
+static NSString *api_check_roof_qr_code = @"Job/Roof.svc/CheckRoofQRCode";
+
+static NSString *api_upload_roof_image = @"Job/Roof.svc/UploadRoofImageWithBase64";
+
 
 //feedback
 

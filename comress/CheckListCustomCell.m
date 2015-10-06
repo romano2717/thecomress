@@ -23,15 +23,14 @@
 - (void)initCellWithResultSet:(NSDictionary *)dict
 {
     NSDictionary *checkList = [dict objectForKey:@"checkListArray"];
+    NSNumber *checkListId = [NSNumber numberWithInt:[[checkList valueForKey:@"CheckListId"] intValue]];
+    
     NSArray *checkedCheckList = [dict objectForKey:@"checked"];
-    NSIndexPath *indexPath = [dict objectForKey:@"indexPath"];
-    BOOL checkListWasModified = [[dict valueForKey:@"checkListWasModified"] boolValue];
-    
-    DDLogVerbose(@"checked %@",checkedCheckList);
-    
+
     NSString *checkListName = [checkList valueForKey:@"CheckListName"];
     
     BOOL isChecked = [[checkList valueForKey:@"IsCheck"] boolValue];
+    BOOL wasModified = [[dict valueForKey:@"wasModified"] boolValue];
     
     
     //defaults
@@ -39,18 +38,21 @@
     
     
     //config ui
+#if DEBUG
+    _checkListLabel.text = [NSString stringWithFormat:@"%@:%@:%@",checkListName,checkListId,[checkList valueForKey:@"IsCheck"]];
+#else
     _checkListLabel.text = checkListName;
-    
+#endif
     [_checkBoxBtn setSelected:isChecked];
-    _checkBoxBtn.tag = indexPath.row;
-    
-    //check if this row is manually selected
-    if([checkedCheckList containsObject:[NSNumber numberWithInt:(int)indexPath.row]])
+
+    if([checkedCheckList containsObject:checkListId])
         [_checkBoxBtn setSelected:YES];
-    else if([checkedCheckList containsObject:[NSNumber numberWithInt:(int)indexPath.row]] == NO && checkListWasModified == YES) //list was modified
+    else if([checkedCheckList containsObject:checkListId] == NO && wasModified == YES) //list was modified
     {
-        if([checkedCheckList containsObject:[NSNumber numberWithInt:(int)indexPath.row]] == NO)
+        if([checkedCheckList containsObject:checkListId] == NO)
             [_checkBoxBtn setSelected:NO];
+        else
+            [_checkBoxBtn setSelected:YES];
     }
 }
 @end

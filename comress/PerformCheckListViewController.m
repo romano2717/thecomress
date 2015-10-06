@@ -10,11 +10,15 @@
 
 @interface PerformCheckListViewController () <UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, strong) IBOutlet UITableView *checkListTableView;
+@property (nonatomic, strong) IBOutlet STCollapseTableView *checkListTableView;
 @property (nonatomic, weak) IBOutlet UIButton *checkAllBtn;
 
 @property (nonatomic, strong) NSArray *checkListArray;
+@property (nonatomic, strong) NSArray *checkAreaArray;
+
 @property (nonatomic, strong) NSMutableArray *checkedCheckListArray;
+@property (nonatomic, strong) NSMutableArray *checkedCheckListAllSectionArray;
+
 
 @property (nonatomic) BOOL checkListWasModified;
 
@@ -29,18 +33,144 @@
     myDatabase = [Database sharedMyDbManager];
     routineSync = [RoutineSynchronize sharedRoutineSyncManager];
     
-    _checkListArray = [_scheduleDict objectForKey:@"CheckListArray"];
     _checkedCheckListArray = [[NSMutableArray alloc] init];
+    _checkedCheckListAllSectionArray = [[NSMutableArray alloc] init];
     
-    for (int i = 0; i < _checkListArray.count; i++) {
-        
-        NSDictionary *dict = [_checkListArray objectAtIndex:i];
-        
-        BOOL IsCheck = [[dict valueForKey:@"IsCheck"] boolValue];
-        
-        if(IsCheck)
-            [_checkedCheckListArray addObject:[NSNumber numberWithInt:i]];
+    _checkListArray = [_scheduleDict objectForKey:@"CheckListArray"];
+    _checkAreaArray = [[NSOrderedSet orderedSetWithArray:[_checkListArray valueForKey:@"CheckArea"]] array];
+    
+    //don't include blank checkArea
+    NSMutableArray *checkAreaTemp = [[NSMutableArray alloc] init];
+    for (NSString *string in _checkAreaArray) {
+        if(string.length > 1)
+            [checkAreaTemp addObject:string];
     }
+    _checkAreaArray = checkAreaTemp;
+    
+    if(_checkAreaArray.count > 0)
+    {
+        NSMutableArray *groupedCheckList = [[NSMutableArray alloc] init];
+        
+        for (int i = 0; i < _checkAreaArray.count; i++) {
+            NSString *checkArea = [_checkAreaArray objectAtIndex:i];
+            
+            NSMutableArray *row = [[NSMutableArray alloc] init];
+            
+            for (NSDictionary *dict in _checkListArray) {
+                NSString *theCheckArea = [dict valueForKey:@"CheckArea"];
+                
+                if([checkArea isEqualToString:theCheckArea])
+                {
+                    [row addObject:dict];
+                }
+            }
+            
+            [groupedCheckList addObject:row];
+        }
+        
+        _checkListArray = groupedCheckList;
+    }
+    
+    [_checkListTableView setExclusiveSections:YES];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didTapSectionNotification:) name:@"didTapSectionNotification" object:nil];
+    
+    
+    //saved all the checked checklist from db
+    if(_checkAreaArray.count > 0)
+    {
+        for (NSArray *arr in _checkListArray) {
+            for (NSDictionary *dict in arr) {
+                BOOL isChecked = [[dict valueForKey:@"IsCheck"] boolValue];
+                NSNumber *checklistId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                
+                if(isChecked)
+                {
+                    if([_checkedCheckListArray containsObject:checklistId] == NO)
+                        [_checkedCheckListArray addObject:checklistId];
+                }
+            }
+        }
+    }
+    else
+    {
+        for (NSDictionary *dict in _checkListArray) {
+            BOOL isChecked = [[dict valueForKey:@"IsCheck"] boolValue];
+            NSNumber *checklistId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+            if(isChecked)
+            {
+                if([_checkedCheckListArray containsObject:checklistId] == NO)
+                    [_checkedCheckListArray addObject:checklistId];
+            }
+        }
+    }
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    [_checkListTableView openSection:0 animated:NO];
+    
+    
+    //pre select/add selected checklist/checkarea
+    if(_checkAreaArray.count > 0)
+    {
+        for (int i = 0; i < _checkListArray.count; i++) {
+            
+            BOOL checkedAllUnderSection = YES;
+            
+            NSArray *arr = [_checkListArray objectAtIndex:i];
+            
+            for (NSDictionary *dict in arr) {
+                BOOL isChecked = [[dict valueForKey:@"IsCheck"] boolValue];
+                NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                
+                if(isChecked == NO)
+                {
+                    checkedAllUnderSection = NO;
+                    break;
+                }
+                else
+                {
+                    if([_checkedCheckListArray containsObject:checkListId] == NO)
+                        [_checkedCheckListArray addObject:checkListId];
+                }
+                
+            }
+            
+            if(checkedAllUnderSection == YES)
+            {
+                if([_checkedCheckListAllSectionArray containsObject:[NSNumber numberWithInt:i]] == NO)
+                    [_checkedCheckListAllSectionArray addObject:[NSNumber numberWithInt:i]];
+            }
+            
+        }
+        
+        if(_checkAreaArray.count == _checkedCheckListAllSectionArray.count)
+            _checkAllBtn.selected = YES;
+    }
+    else
+    {
+        for (NSDictionary *dict in _checkListArray) {
+            BOOL isChecked = [[dict valueForKey:@"IsCheck"] boolValue];
+            NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+            
+            if(isChecked == YES)
+            {
+                if([_checkedCheckListArray containsObject:checkListId] == NO)
+                    [_checkedCheckListArray addObject:checkListId];
+            }
+            
+        }
+
+        if(_checkedCheckListArray.count == _checkListArray.count)
+            _checkAllBtn.selected = YES;
+    }
+    
+    DDLogVerbose(@"_checkedCheckListArray %@",_checkedCheckListArray);
+    
+    [_checkListTableView reloadData];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -58,28 +188,134 @@
 }
 */
 
+- (void)didTapSectionNotification:(NSNotification *)notif
+{
+    _checkListWasModified = YES;
+    
+    NSDictionary *dict = [notif userInfo];
+    
+    NSNumber *section = [dict objectForKey:@"section"];
+    NSNumber *tapAtXArea = [dict objectForKey:@"tapAtXArea"];
+    
+    if([tapAtXArea intValue] <= 25)
+    {
+        
+        if([_checkedCheckListAllSectionArray containsObject:section] == NO)
+        {
+            [_checkedCheckListAllSectionArray addObject:section];
+            
+            NSArray *checLst = [_checkListArray objectAtIndex:[section integerValue]];
+            
+            for (NSDictionary *dict in checLst) {
+                NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                
+                [_checkedCheckListArray addObject:checkListId];
+            }
+        }
+        
+        else
+        {
+            [_checkedCheckListAllSectionArray removeObject:section];
+            
+            NSArray *checLst = [_checkListArray objectAtIndex:[section integerValue]];
+            
+            for (NSDictionary *dict in checLst) {
+                NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                
+                [_checkedCheckListArray removeObject:checkListId];
+            }
+        }
+        
+        [_checkListTableView openSection:[section integerValue] animated:YES];
+        
+        
+        if(_checkAreaArray.count > 0)
+        {
+            if(_checkedCheckListAllSectionArray.count == _checkAreaArray.count)
+                [self checkAll:self];
+            else
+                _checkAllBtn.selected = NO;
+        }
+        else
+        {
+            if(_checkListArray.count == _checkedCheckListArray.count)
+                [self checkAll:self];
+            else
+                _checkAllBtn.selected = NO;
+        }
+    }
+    
+    [_checkListTableView reloadData];
+}
+
 #pragma mark - Table view data source
+
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    if(_checkAreaArray.count > 0)
+        return 42.0f;
+    return 0.0f;
+}
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
 
     // Return the number of sections.
+    if(_checkAreaArray.count > 0)
+        return _checkAreaArray.count;
     return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 
     // Return the number of rows in the section.
-    return _checkListArray.count;
+    if(_checkAreaArray.count == 0)
+        return _checkListArray.count;
+    return [[_checkListArray objectAtIndex:section] count];
 }
 
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    return [_checkAreaArray objectAtIndex:section];
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    UIImage *checkedImage = [UIImage imageNamed:@"check"];
+    
+    if([_checkedCheckListAllSectionArray containsObject:[NSNumber numberWithInteger:section]])
+        checkedImage = [UIImage imageNamed:@"checked"];
+    
+    UIButton *btn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    
+    btn.frame = CGRectMake(0, 0, self.view.frame.size.width, 42.0f);
+    [btn setTitle:[NSString stringWithFormat:@" %@",[_checkAreaArray objectAtIndex:section]] forState:UIControlStateNormal];
+    [btn setImage:checkedImage forState:UIControlStateNormal];
+    btn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    btn.backgroundColor = [UIColor lightGrayColor];
+    [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    btn.titleLabel.font = [UIFont boldSystemFontOfSize:15];
+    btn.tag = section;
+    [btn.layer setBorderWidth:0.5f];
+    [btn.layer setBorderColor:[UIColor whiteColor].CGColor];
+    
+    return btn;
+}
 
  - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
      static NSString *cellIdentifier = @"cell";
      
      CheckListCustomCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
      
-     NSDictionary *dict = @{@"checkListArray":[_checkListArray objectAtIndex:indexPath.row],@"checked":_checkedCheckListArray,@"indexPath":indexPath,@"checkListWasModified":[NSNumber numberWithBool:_checkListWasModified]};
+     NSArray *theCheckListArray;
+
+     if(_checkAreaArray.count > 0)
+         theCheckListArray = [[_checkListArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
+     else
+         theCheckListArray = [_checkListArray objectAtIndex:indexPath.row];
      
+     NSDictionary *dict = @{@"checkListArray":theCheckListArray,@"checked":_checkedCheckListArray,@"wasModified":[NSNumber numberWithBool:_checkListWasModified]};
+
      [cell initCellWithResultSet:dict];
      
      return cell;
@@ -87,7 +323,10 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"updateCheckList" object:nil userInfo:@{@"checkeCheckList":_checkedCheckListArray}];
+//    if(_checkAreaArray.count == 0)
+//        [[NSNotificationCenter defaultCenter] postNotificationName:@"updateCheckList" object:nil userInfo:@{@"checkeCheckList":_checkedCheckListArray}];
+//    else
+//        [[NSNotificationCenter defaultCenter] postNotificationName:@"updateCheckList" object:nil userInfo:@{@"checkeCheckList":[[_checkedCheckListArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row]}];
 }
 
 - (IBAction)cancel:(id)sender
@@ -102,32 +341,44 @@
         BOOL up = NO;
         NSNumber *scheduleId = [NSNumber numberWithInt:[[_scheduleDict valueForKeyPath:@"SUPSchedule.ScheduleId"] intValue]];
         
-        for (int i = 0; i < _checkListArray.count; i++) {
-            NSDictionary *dict = [_checkListArray objectAtIndex:i];
-            
-            NSNumber *row = [NSNumber numberWithInt:i];
-            
-            BOOL toggle = YES;
-            
-
-            NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
-            
-            if([_checkedCheckListArray containsObject:row] == YES)
-                toggle = YES;
-            else
-                toggle = NO;
-            
-            NSNumber *toggleBool = [NSNumber numberWithBool:toggle];
-            
-            up = [db executeUpdate:@"update rt_checklist set is_checked = ? where checklist_id = ? and schedule_id = ?",toggleBool,checkListId,scheduleId];
-            
-            if(!up)
-            {
-                *rollback = YES;
-                return;
+        if(_checkAreaArray.count > 0)
+        {
+            for (NSArray *arr in _checkListArray) {
+                for (NSDictionary *dict in arr) {
+                    NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                    
+                    NSNumber *toggle = [NSNumber numberWithBool:NO];
+                    
+                    if([_checkedCheckListArray containsObject:checkListId])
+                        toggle = [NSNumber numberWithBool:YES];
+                    DDLogVerbose(@"_checkedCheckListArray %@",_checkedCheckListArray);
+                    db.traceExecution = YES;
+                    up = [db executeUpdate:@"update rt_checklist set is_checked = ? where checklist_id = ? and schedule_id = ?",toggle,checkListId,scheduleId];
+                    db.traceExecution = NO;
+                    DDLogVerbose(@"row affected %d",[db changes]);
+                    
+                }
             }
         }
         
+        else
+        {
+            for (NSDictionary *dict in _checkListArray) {
+                NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                
+                NSNumber *toggle = [NSNumber numberWithBool:NO];
+                
+                if([_checkedCheckListArray containsObject:checkListId])
+                    toggle = [NSNumber numberWithBool:YES];
+                
+                DDLogVerbose(@"_checkedCheckListArray %@",_checkedCheckListArray);
+                db.traceExecution = YES;
+                up = [db executeUpdate:@"update rt_checklist set is_checked = ? where checklist_id = ? and schedule_id = ?",toggle,checkListId,scheduleId];
+                db.traceExecution = NO;
+                DDLogVerbose(@"row affected %d",[db changes]);
+            }
+        }
+
         if(up == YES)
         {
             NSNumber *needToSync = [NSNumber numberWithInt:2];
@@ -142,6 +393,7 @@
         }
     }];
     
+    [AGPushNoteView showWithNotificationMessage:@"Checklist Updated!"];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"updateCheckList" object:nil userInfo:@{@"checkeCheckList":_checkedCheckListArray}];
 }
@@ -153,14 +405,39 @@
     
     _checkAllBtn.selected = !_checkAllBtn.selected;
     
+    
+    [_checkedCheckListAllSectionArray removeAllObjects];
     [_checkedCheckListArray removeAllObjects];
     
-    if(_checkAllBtn.selected)
+    if(_checkAllBtn.selected == YES)
     {
-        for (int i = 0; i < _checkListArray.count; i++) {
-            [_checkedCheckListArray addObject:[NSNumber numberWithInt:i]];
+        //check all!
+        for (int i = 0; i < _checkAreaArray.count; i++) {
+            [_checkedCheckListAllSectionArray addObject:[NSNumber numberWithInt:i]];
+        }
+        
+        if(_checkAreaArray.count > 0)
+        {
+            for (int i = 0; i < _checkListArray.count; i++) {
+                NSArray *arr = [_checkListArray objectAtIndex:i];
+                
+                for (NSDictionary *dict in arr) {
+                    NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                    
+                    [_checkedCheckListArray addObject:checkListId];
+                }
+            }
+        }
+        else
+        {
+            for (NSDictionary *dict in _checkListArray) {
+                NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+                
+                [_checkedCheckListArray addObject:checkListId];
+            }
         }
     }
+    
     
     [_checkListTableView reloadData];
 }
@@ -173,21 +450,61 @@
     
     btn.selected = !btn.selected;
     
-    int tag = (int)btn.tag;
+    NSIndexPath *indexPath = [_checkListTableView indexPathForCell:(UITableViewCell *)btn.superview.superview];
     
-    NSNumber *checkListRow = [NSNumber numberWithInt:tag];
+    NSNumber *checkListId;
     
-    [_checkedCheckListArray removeObject:checkListRow];
+    if(_checkAreaArray.count > 0)
+        checkListId = [[[_checkListArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row] valueForKey:@"CheckListId"];
+    else
+        checkListId = [[_checkListArray objectAtIndex:indexPath.row] valueForKey:@"CheckListId"];
     
-    if(btn.selected && [_checkedCheckListArray containsObject:checkListRow] == NO)
-        [_checkedCheckListArray addObject:checkListRow];
+    [_checkedCheckListArray removeObject:checkListId];
+
+    if(btn.selected && [_checkedCheckListArray containsObject:checkListId] == NO)
+        [_checkedCheckListArray addObject:checkListId];
+    
+    if(_checkAreaArray.count > 0)
+    {
+        [_checkedCheckListAllSectionArray removeAllObjects];
+        
+        for (int i = 0; i < _checkListArray.count; i++) {
+            
+            BOOL checkedAllUnderSection = YES;
+            
+            NSArray *arr = [_checkListArray objectAtIndex:i];
+            
+            for (NSDictionary *dict in arr) {
+                NSNumber *checkListId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
+
+                if([_checkedCheckListArray containsObject:checkListId] == NO)
+                {
+                    checkedAllUnderSection = NO;
+                    break;
+                }
+            }
+            
+            if(checkedAllUnderSection == YES)
+                [_checkedCheckListAllSectionArray addObject:[NSNumber numberWithInt:i]];
+        }
+        
+        if(_checkedCheckListAllSectionArray.count == _checkAreaArray.count)
+            [self checkAll:sender];
+        else
+            _checkAllBtn.selected = NO;
+    }
+    
+    else
+    {
+        if(_checkListArray.count == _checkedCheckListArray.count)
+            [self checkAll:sender];
+        else
+            _checkAllBtn.selected = NO;
+    }
+    
+    DDLogVerbose(@"%@",_checkedCheckListArray);
     
     [_checkListTableView reloadData];
-    
-    if(_checkedCheckListArray.count == _checkListArray.count)
-        [self checkAll:sender];
-    else
-        _checkAllBtn.selected = NO;
 }
 
 

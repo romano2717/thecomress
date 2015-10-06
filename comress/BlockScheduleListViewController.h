@@ -17,6 +17,7 @@
 #import "JobListViewController.h"
 #import "RoutineSynchronize.h"
 #import "ReportMissingQRViewController.h"
+#import "MBProgressHUD.h"
 
 @interface BlockScheduleListViewController : UIViewController
 {

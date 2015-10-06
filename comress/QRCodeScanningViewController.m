@@ -17,6 +17,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    
+    CLLocation *loc = [[CLLocation alloc] initWithLatitude:0 longitude:0];
+    _location = loc;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -177,23 +180,31 @@
         [self.view viewWithTag:100].hidden = NO;
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            
-            if(_scanQrCodeInsideJobList == NO)
+            if(_scanQrCodeForRoofCheckAccess == YES)
             {
-                if(_scanQrCodeByRandom == NO)
-                {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQrCodePerBlock" object:nil userInfo:@{@"scanValue":_scanValue,@"location":_location,@"scheduleDict":_scheduleDetailDict}];
-                }
-                else
-                    [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQrCodeRandom" object:nil userInfo:@{@"scanValue":_scanValue,@"location":_location}];
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQRCodeForRoofAccessCheck" object:nil userInfo:@{@"scanValue":_scanValue,@"location":_location,@"scheduleDict":_scheduleDetailDict}];
                 
-                [self.navigationController popToRootViewControllerAnimated:YES];
+                [self.navigationController popViewControllerAnimated:YES];
             }
             else
             {
-                [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQrCodeForJobList" object:nil userInfo:@{@"scanValue":_scanValue,@"location":_location,@"scheduleDict":_scheduleDetailDict}];
-                
-                [self.navigationController popViewControllerAnimated:YES];
+                if(_scanQrCodeInsideJobList == NO)
+                {
+                    if(_scanQrCodeByRandom == NO)
+                    {
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQrCodePerBlock" object:nil userInfo:@{@"scanValue":_scanValue,@"location":_location,@"scheduleDict":_scheduleDetailDict}];
+                    }
+                    else
+                        [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQrCodeRandom" object:nil userInfo:@{@"scanValue":_scanValue,@"location":_location}];
+                    
+                    [self.navigationController popToRootViewControllerAnimated:YES];
+                }
+                else
+                {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQrCodeForJobList" object:nil userInfo:@{@"scanValue":_scanValue,@"location":_location,@"scheduleDict":_scheduleDetailDict}];
+                    
+                    [self.navigationController popViewControllerAnimated:YES];
+                }
             }
         });
     }

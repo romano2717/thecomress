@@ -146,9 +146,6 @@
                 
                 while ([rs next]) {
                     
-                    NSNumber *clientSurveyId = [NSNumber numberWithInt:[rsGetSurvey intForColumn:@"client_survey_id"]];
-                    NSNumber *surveyId = [NSNumber numberWithInt:[rsGetSurvey intForColumn:@"survey_id"]];
-                    
 //                    //count how many issues this survey have
 //                    NSNumber *issuesCount = [NSNumber numberWithInt:0];
 //                    
@@ -353,9 +350,7 @@
             comps.minute = 59;
             comps.second = 59;
             NSDate *daysAgo = [[[NSCalendar currentCalendar] dateFromComponents:comps] dateByAddingTimeInterval:-[numberOfInActiveDays intValue]*23*59*59];
-            NSDate *nowDate = [[NSCalendar currentCalendar] dateFromComponents:comps];
-            
-            double nowTimestamp = [nowDate timeIntervalSince1970];
+    
             double timestampDaysAgo = [daysAgo timeIntervalSince1970];
             db.traceExecution = NO;
 //            FMResultSet *rsGetSurvey = [db executeQuery:@"select s.* from su_survey s left join su_feedback f on s.survey_id = f.survey_id left join su_feedback_issue fs on f.feedback_id = fs.feedback_id left join post p on fs.post_id = p.post_id where((fs.feedback_issue_id is null and s.survey_date > ?) or(fs.feedback_issue_id is not null and fs.post_id = 0 and fs.status = 4 and fs.updated_on > ?)) or (fs.feedback_issue_id is not null and fs.post_id > 0 and (p.status = 4 and p.dueDate > ?)) and s.created_by in (select user_id from block_user_mapping where supervisor_id = ? or user_id = ? group by user_id) group by s.survey_id",[NSNumber numberWithDouble:timestampDaysAgo],[NSNumber numberWithDouble:timestampDaysAgo],[NSNumber numberWithDouble:nowTimestamp],[myDatabase.userDictionary valueForKey:@"user_id"],[myDatabase.userDictionary valueForKey:@"user_id"]];
@@ -1117,11 +1112,6 @@
 - (NSArray *)surveyListForSegment:(int)segment
 {
     NSMutableArray *arr = [[NSMutableArray alloc] init];
-    
-    NSDate *now = [NSDate date];
-    NSDateComponents* comps = [[NSCalendar currentCalendar] components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay fromDate:now];
-    NSDate *daysAgo = [[NSCalendar currentCalendar] dateFromComponents:comps];
-    double timestampDaysAgo = [daysAgo timeIntervalSince1970];
     
     if(segment == 0)
     {

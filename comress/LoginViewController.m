@@ -122,6 +122,7 @@
             __block BOOL user_q = NO;
             __block BOOL client_q = NO;
             __block BOOL loginOk = YES;
+
             
             [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url ,api_login] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
                 

@@ -49,7 +49,8 @@
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didScanQrCodeRandom:) name:@"didScanQrCodeRandom" object:nil];
     
-    [self getCurrentDaySchedule];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getCurrentDaySchedule) name:UIApplicationDidBecomeActiveNotification object:nil];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -61,7 +62,7 @@
 {
     [super viewDidAppear:animated];
     
-    [self reloadScheduleList];
+    [self getCurrentDaySchedule];
 }
 
 - (void)reloadScheduleList
@@ -264,7 +265,25 @@
         
         if(scheduleisExists)
         {
-            NSString *q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bm.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.user_id = '%@' and bm.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId];
+            NSString *q = nil;
+            
+            NSString *userGroup = [myDatabase.userDictionary valueForKey:@"group_name"];
+            
+            if([userGroup isEqualToString:@"CT_NU"])
+            {
+                
+            }
+            else if ([userGroup isEqualToString:@"CT_SA"])
+            {
+            
+            }
+            else if ([userGroup isEqualToString:@"CT_SUP"])
+            {
+                
+            }
+            
+
+            q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bm.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.user_id = '%@' and bm.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId];
 
             if(self.segment.selectedSegmentIndex == 1)
             {
@@ -327,6 +346,8 @@
         
         NSDictionary *params = @{@"scheduledDate":wcfDate};
         
+        [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+        
         [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url ,api_download_block_schedule] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
             
             NSArray *ScheduledBlockList = [responseObject objectForKey:@"ScheduledBlockList"];
@@ -380,6 +401,8 @@
                 }
             }];
             
+            [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
+            
             if(ScheduledBlockList.count > 0)
             {
                 [self retrieveScheduleLocallyForDate:date];
@@ -389,9 +412,7 @@
             else
             {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"No schedule routine job for today" delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
-                    
-                    [alert show];
+                    [[_blockScheduleTableView viewWithTag:100] removeFromSuperview];
                     
                     UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(5, 5, CGRectGetWidth(_blockScheduleTableView.frame), 50)];
                     label.tag = 100;
@@ -404,6 +425,8 @@
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
+            
+            [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
             
             [self downloadBlockScheduleForDate:date];
         }];

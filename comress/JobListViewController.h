@@ -14,10 +14,17 @@
 #import "SchedDetailViewController.h"
 #import "ScanQrCodeViewController.h"
 #import "RoutineSynchronize.h"
+#import "RoofAccessInfoViewController.h"
+#import "QRCodeScanningViewController.h"
+#import "MZFormSheetController.h"
+#import "MZCustomTransition.h"
+#import "MZFormSheetSegue.h"
+#import "JobListActionsViewController.h"
 
 @interface JobListViewController : UIViewController
 {
     Database *myDatabase;
+    ImageOptions *imgOpts;
 }
 
 @property (nonatomic, strong)NSDictionary *scheduleDetailDict;

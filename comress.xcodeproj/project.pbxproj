@@ -302,6 +302,8 @@
 		4DD6FEAD1A884CFF00CBBE1D /* UIView+WebCacheOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD6FE9D1A884CFF00CBBE1D /* UIView+WebCacheOperation.m */; };
 		4DD6FEB91A88954800CBBE1D /* Synchronize.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD6FEB81A88954800CBBE1D /* Synchronize.m */; };
 		4DD6FEC41A88B68400CBBE1D /* AFNetworkActivityLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD6FEC31A88B68400CBBE1D /* AFNetworkActivityLogger.m */; };
+		4DD937FC1BBBB26A00776772 /* JobListActionsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD937FB1BBBB26A00776772 /* JobListActionsViewController.m */; settings = {ASSET_TAGS = (); }; };
+		4DD938001BBBB29500776772 /* RoofAccessInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD937FF1BBBB29500776772 /* RoofAccessInfoViewController.m */; settings = {ASSET_TAGS = (); }; };
 		4DD99F201B045829005E5F3E /* TSAFBPO.html in Resources */ = {isa = PBXBuildFile; fileRef = 4DD99F1F1B045829005E5F3E /* TSAFBPO.html */; };
 		4DD99F231B0487C3005E5F3E /* TIWSBPO.html in Resources */ = {isa = PBXBuildFile; fileRef = 4DD99F221B0487C3005E5F3E /* TIWSBPO.html */; };
 		4DD99F271B059B91005E5F3E /* TIWSBPM.html in Resources */ = {isa = PBXBuildFile; fileRef = 4DD99F261B059B91005E5F3E /* TIWSBPM.html */; };
@@ -865,6 +867,10 @@
 		4DD6FEB81A88954800CBBE1D /* Synchronize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Synchronize.m; sourceTree = "<group>"; };
 		4DD6FEC21A88B68400CBBE1D /* AFNetworkActivityLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFNetworkActivityLogger.h; sourceTree = "<group>"; };
 		4DD6FEC31A88B68400CBBE1D /* AFNetworkActivityLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AFNetworkActivityLogger.m; sourceTree = "<group>"; };
+		4DD937FA1BBBB26A00776772 /* JobListActionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JobListActionsViewController.h; sourceTree = "<group>"; };
+		4DD937FB1BBBB26A00776772 /* JobListActionsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JobListActionsViewController.m; sourceTree = "<group>"; };
+		4DD937FE1BBBB29500776772 /* RoofAccessInfoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RoofAccessInfoViewController.h; sourceTree = "<group>"; };
+		4DD937FF1BBBB29500776772 /* RoofAccessInfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RoofAccessInfoViewController.m; sourceTree = "<group>"; };
 		4DD99F1F1B045829005E5F3E /* TSAFBPO.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = TSAFBPO.html; sourceTree = "<group>"; };
 		4DD99F221B0487C3005E5F3E /* TIWSBPO.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = TIWSBPO.html; sourceTree = "<group>"; };
 		4DD99F261B059B91005E5F3E /* TIWSBPM.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = TIWSBPM.html; sourceTree = "<group>"; };
@@ -2170,6 +2176,37 @@
 			name = "JOB/SCHED DETAIL";
 			sourceTree = "<group>";
 		};
+		4DD937F81BBBB22500776772 /* ACTIONS */ = {
+			isa = PBXGroup;
+			children = (
+				4DD937FD1BBBB27000776772 /* ROOF ACCESS */,
+				4DD937F91BBBB24100776772 /* SCAN/REPORT QR CODE */,
+				4DD937FA1BBBB26A00776772 /* JobListActionsViewController.h */,
+				4DD937FB1BBBB26A00776772 /* JobListActionsViewController.m */,
+			);
+			name = ACTIONS;
+			sourceTree = "<group>";
+		};
+		4DD937F91BBBB24100776772 /* SCAN/REPORT QR CODE */ = {
+			isa = PBXGroup;
+			children = (
+				4DFD12171BB2825800D1EE14 /* ScanQrCodeViewController.h */,
+				4DFD12181BB2825800D1EE14 /* ScanQrCodeViewController.m */,
+				4DFD121A1BB2827500D1EE14 /* ScanQrCodeTableViewCell.h */,
+				4DFD121B1BB2827500D1EE14 /* ScanQrCodeTableViewCell.m */,
+			);
+			name = "SCAN/REPORT QR CODE";
+			sourceTree = "<group>";
+		};
+		4DD937FD1BBBB27000776772 /* ROOF ACCESS */ = {
+			isa = PBXGroup;
+			children = (
+				4DD937FE1BBBB29500776772 /* RoofAccessInfoViewController.h */,
+				4DD937FF1BBBB29500776772 /* RoofAccessInfoViewController.m */,
+			);
+			name = "ROOF ACCESS";
+			sourceTree = "<group>";
+		};
 		4DD99F211B048700005E5F3E /* TotalIssuesWithStatusByPo */ = {
 			isa = PBXGroup;
 			children = (
@@ -2318,10 +2355,7 @@
 		4DFD12161BB2821F00D1EE14 /* Scan QR Code */ = {
 			isa = PBXGroup;
 			children = (
-				4DFD12171BB2825800D1EE14 /* ScanQrCodeViewController.h */,
-				4DFD12181BB2825800D1EE14 /* ScanQrCodeViewController.m */,
-				4DFD121A1BB2827500D1EE14 /* ScanQrCodeTableViewCell.h */,
-				4DFD121B1BB2827500D1EE14 /* ScanQrCodeTableViewCell.m */,
+				4DD937F81BBBB22500776772 /* ACTIONS */,
 			);
 			name = "Scan QR Code";
 			sourceTree = "<group>";
@@ -2668,6 +2702,7 @@
 				4D0C2F8C1A7B4C98009E5E53 /* Post.m in Sources */,
 				4D26F4C11AE72FDA00992319 /* UIImage+Additional.m in Sources */,
 				4DA207F11A79DA0A00C7E5C7 /* JSQMessagesBubbleImage.m in Sources */,
+				4DD937FC1BBBB26A00776772 /* JobListActionsViewController.m in Sources */,
 				4D8C47F41AA0270F006DF588 /* NSData+Base64.m in Sources */,
 				4DFD12131BB1447F00D1EE14 /* QrCodeListTableViewCell.m in Sources */,
 				4D5F11F41BAA7145005AE689 /* InlineTextAttachment.m in Sources */,
@@ -2779,6 +2814,7 @@
 				4D91D5E91A8F37AF00A21DBA /* FPTouchView.m in Sources */,
 				4D26F4BE1AE72FDA00992319 /* MZFormSheetPresentationControllerSegue.m in Sources */,
 				4D0C2F921A7B4CAC009E5E53 /* Users.m in Sources */,
+				4DD938001BBBB29500776772 /* RoofAccessInfoViewController.m in Sources */,
 				4DF666B41AA9615300C3B0FF /* NavigationBarTitleWithSubtitleView.m in Sources */,
 				4D91D5EF1A8FAA2500A21DBA /* PostStatusTableViewController.m in Sources */,
 				4D0AA0211AC5265300DC2886 /* CheckAreaHeader.m in Sources */,

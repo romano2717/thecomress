@@ -47,7 +47,11 @@
     formatter.dateFormat = @"dd-MMM-YYYY HH:mm";
     NSString *dateString = [formatter stringFromDate:date];
     
-    double dueDateTimeStamp = [[[postInfoDict objectForKey:@"post"] valueForKey:@"dueDate"] doubleValue];
+    double dueDateTimeStamp = 0;
+    
+    if([[postInfoDict objectForKey:@"post"] valueForKey:@"dueDate"] != [NSNull null])
+        dueDateTimeStamp = [[[postInfoDict objectForKey:@"post"] valueForKey:@"dueDate"] doubleValue];
+    
     NSDate *dueDateNsDate = [NSDate dateWithTimeIntervalSince1970:dueDateTimeStamp];
     NSString *dueDateString = [formatter stringFromDate:dueDateNsDate];
     

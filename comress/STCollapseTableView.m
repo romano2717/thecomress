@@ -282,7 +282,7 @@
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-	int nbSection = [self.collapseDataSource numberOfSectionsInTableView:tableView];
+	int nbSection = (int)[self.collapseDataSource numberOfSectionsInTableView:tableView];
     
 	while (nbSection < [self.sectionsStates count])
     {
@@ -330,12 +330,19 @@
 
 - (void)handleTapGesture:(UITapGestureRecognizer*)tap
 {
+    CGPoint touchPoint = [tap locationInView:tap.view];
+    
     NSInteger index = tap.view.tag;
     
-    if (index >= 0)
+    if(touchPoint.x > 30)
     {
-        [self toggleSection:(NSUInteger)index animated:YES];
+        if (index >= 0)
+        {
+            [self toggleSection:(NSUInteger)index animated:YES];
+        }
     }
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"didTapSectionNotification" object:nil userInfo:@{@"section":[NSNumber numberWithInteger:index],@"tapAtXArea":[NSNumber numberWithInt:touchPoint.x]}];
 }
 
 - (NSArray*)indexPathsForRowsInSectionAtIndex:(NSUInteger)sectionIndex

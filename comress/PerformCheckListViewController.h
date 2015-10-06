@@ -10,6 +10,8 @@
 #import "CheckListCustomCell.h"
 #import "Database.h"
 #import "RoutineSynchronize.h"
+#import "STCollapseTableView.h"
+#import "AGPushNoteView.h"
 
 @interface PerformCheckListViewController : UIViewController
 {

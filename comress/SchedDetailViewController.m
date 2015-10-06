@@ -8,7 +8,7 @@
 
 #import "SchedDetailViewController.h"
 
-@interface SchedDetailViewController ()<UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate, UIImagePickerControllerDelegate, UIActionSheetDelegate,UINavigationControllerDelegate,UITextViewDelegate,MZFormSheetBackgroundWindowDelegate>
+@interface SchedDetailViewController ()<UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate, UIImagePickerControllerDelegate, UIActionSheetDelegate,UINavigationControllerDelegate,UITextViewDelegate,MZFormSheetBackgroundWindowDelegate,UIAlertViewDelegate>
 
 @property (nonatomic, weak) IBOutlet UILabel *scheduleDateLabel;
 @property (nonatomic, weak) IBOutlet UILabel *statusLabel;
@@ -42,16 +42,6 @@
     myDatabase = [Database sharedMyDbManager];
     routineSync = [RoutineSynchronize sharedRoutineSyncManager];
     
-    /**********/
-    
-//    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-//        [db executeUpdate:@"delete from rt_checklist"];
-//        [db executeUpdate:@"delete from rt_imageTemplate"];
-//        [db executeUpdate:@"delete from rt_schedule_detail"];
-//        [db executeUpdate:@"delete from rt_schedule_image"];
-//    }];
-    /**********/
-    
     //add border to remarks textview
     [[_remarksTextView layer] setBorderColor:[[UIColor lightGrayColor] CGColor]];
     [[_remarksTextView layer] setBorderWidth:1];
@@ -68,6 +58,9 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setScheduleAction:) name:@"setScheduleAction" object:nil];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateCheckList:) name:@"updateCheckList" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getScheduleDetail) name:UIApplicationDidBecomeActiveNotification object:nil];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -110,8 +103,6 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
-    
-    DDLogVerbose(@"%@",_scheduleImagePairCounter);
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
@@ -223,7 +214,7 @@
         FMResultSet *rsScheduleDetail = [db executeQuery:@"select * from rt_schedule_detail where schedule_id = ?",theSelectedScheduleId];
         NSMutableDictionary *SUPSchedule = [[NSMutableDictionary alloc] init];
         
-        NSDictionary *imageConfig;
+        NSDictionary *imageConfig = @{};
         
         while ([rsScheduleDetail next]) {
             NSString *Area = [rsScheduleDetail stringForColumn:@"area"];
@@ -352,6 +343,45 @@
         
         //table view
         [_imagesTableView reloadData];
+        
+        
+        /*
+         if [[_scheduleDetailDictionary objectForKey:@"ImageTemplate"] count] is 0, add imageview as subview in table
+         and always display the latest added image
+         */
+        if([[_scheduleDetailDictionary objectForKey:@"ImageTemplate"] count] == 0)
+        {
+
+            UIButton *btnImage = [[UIButton alloc] initWithFrame:CGRectMake(8, 8, 80, 79)];
+            NSArray *ImageList = [_scheduleDetailDictionary objectForKey:@"ImageList"];
+            
+            if(ImageList.count == 0)
+                [btnImage setImage:[UIImage imageNamed:@"noImage2@2x.png"] forState:UIControlStateNormal];
+            else
+            {
+                NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+                NSString *documentsPath = [paths objectAtIndex:0];
+                
+                NSString *imagePath = [[ImageList firstObject] objectForKey:@"ImageName"];
+                NSString *filePath = [documentsPath stringByAppendingPathComponent:imagePath];
+                UIImage *beforeImage = [UIImage imageWithContentsOfFile:filePath];
+                
+                [btnImage setImage:beforeImage forState:UIControlStateNormal];
+                
+                
+                // add arrow image for viewing images
+                UIButton *arrow = [[UIButton alloc] initWithFrame:CGRectMake(_imagesTableView.frame.size.width - 84, 8, 42, 42)];
+                [arrow setImage:[UIImage imageNamed:@"arrow"] forState:UIControlStateNormal];
+                [arrow addTarget:self action:@selector(viewOptionalPhotos:) forControlEvents:UIControlEventTouchUpInside];
+                
+                [_imagesTableView addSubview:arrow];
+            }
+            
+            
+            [btnImage addTarget:self action:@selector(addOptionalPhoto:) forControlEvents:UIControlEventTouchUpInside];
+            
+            [_imagesTableView addSubview:btnImage];
+        }
     });
 }
 
@@ -438,7 +468,7 @@
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
         
-        [self getScheduleDetail];
+        [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
     }];
 }
 
@@ -609,6 +639,13 @@
     [self performSegueWithIdentifier:@"push_image_viewer" sender:dict];
 }
 
+- (IBAction)addOptionalPhoto:(id)sender
+{
+    _imageType = 1;
+    _selectedImageTemplateDict = @{@"ScheduleId":[NSNumber numberWithInt:[[_jobDetailDict valueForKey:@"ScheduleId"] intValue]]};
+    [self openMediaByType:1];
+}
+
 - (IBAction)addMorePhotos:(id)sender
 {
     UITapGestureRecognizer *tap = sender;
@@ -628,6 +665,16 @@
     {
         [self openMediaByType:1];
     }
+}
+
+- (IBAction)viewOptionalPhotos:(id)sender
+{
+    _imageType = 1;
+    _selectedImageTemplateDict = @{@"ScheduleId":[NSNumber numberWithInt:[[_jobDetailDict valueForKey:@"ScheduleId"] intValue]]};
+    
+    NSDictionary *dict = @{@"imageType":[NSNumber numberWithInt:_imageType],@"imageTemplate":_selectedImageTemplateDict,@"jobDesc":_jobDetailDict};
+    
+    [self performSegueWithIdentifier:@"push_image_viewer" sender:dict];
 }
 
 - (IBAction)viewPhotos:(id)sender
@@ -839,8 +886,9 @@
 {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         PerformCheckListViewController *checkList = [self.storyboard instantiateViewControllerWithIdentifier:@"PerformCheckListViewController"];
+
         checkList.scheduleDict = _scheduleDetailDictionary;
-        
+        DDLogVerbose(@"clean _checkListArray %@",[_scheduleDetailDictionary objectForKey:@"CheckListArray"]);
         MZFormSheetController *formSheet = [[MZFormSheetController alloc] initWithViewController:checkList];
         
         formSheet.presentedFormSheetSize = CGSizeMake(300, 350);
@@ -868,6 +916,8 @@
         
         formSheet.willDismissCompletionHandler = ^(UIViewController *presentedFSViewController) {
             DDLogVerbose(@"will dismiss");
+            
+            [self getScheduleDetail];
         };
     });
 }

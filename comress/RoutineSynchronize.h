@@ -35,4 +35,6 @@
 
 - (void)uploadScannedQrCodeFromSelf:(BOOL)fromSelf;
 
+- (void)uploadRoofCheckAccessFromSelf:(BOOL)fromSelf;
+
 @end

@@ -8,7 +8,7 @@
 
 #import "Database.h"
 
-static const int newDatabaseVersion = 23; //this database version is incremented everytime the database version is updated
+static const int newDatabaseVersion = 24; //this database version is incremented everytime the database version is updated
 
 @implementation Database
 
@@ -266,8 +266,18 @@ static const int newDatabaseVersion = 23; //this database version is incremented
                                     //22-sept-2015
                                     @"CREATE TABLE if not exists rt_scanned_qr_code (client_scanned_qr_id INTEGER PRIMARY KEY AUTOINCREMENT, scanned_qr_id INTEGER, block_id INTEGER, scanChkListBlkId INTEGER);",
                                     
-                                    @"CREATE TABLE if not exists rt_miss_qr_code (client_miss_qr_id INTEGER PRIMARY KEY AUTOINCREMENT, miss_qr_id INTEGER, block_id INTEGER, scanChkListBlkId INTEGER);"
+                                    @"CREATE TABLE if not exists rt_miss_qr_code (client_miss_qr_id INTEGER PRIMARY KEY AUTOINCREMENT, miss_qr_id INTEGER, block_id INTEGER, scanChkListBlkId INTEGER);",
                                     
+                                    
+                                    //30-sept-2015 roof check image
+                                    @"CREATE TABLE if not exists rt_roof_check_image (client_roof_image_id INTEGER PRIMARY KEY AUTOINCREMENT, roof_image_id INTEGER DEFAULT (0), roof_check_sno INTEGER DEFAULT (0), image_name VARCHAR (100), latitude DOUBLE DEFAULT (0), longitude DOUBLE DEFAULT (0));",
+                                    
+                                    
+                                    //30-sept-2015 add blockId for rt_roof_check_image for reference
+                                    @"ALTER TABLE rt_roof_check_image add block_id INTEGER DEFAULT (0)",
+                                    
+                                    //30-sept-2015 add date for rt_roof_check_image
+                                    @"ALTER TABLE rt_roof_check_image add dateChecked DATE"
                                     ];
         
         
@@ -380,8 +390,6 @@ static const int newDatabaseVersion = 23; //this database version is incremented
     {
         UIFont *theFont;
         
-        NSString *category = [[UIApplication sharedApplication] preferredContentSizeCategory];
-
         if(size == mediumText)
         {
             theFont = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];

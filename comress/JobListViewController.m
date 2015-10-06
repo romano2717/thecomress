@@ -8,11 +8,14 @@
 
 #import "JobListViewController.h"
 
-@interface JobListViewController ()<UITableViewDataSource, UITableViewDelegate>
+@interface JobListViewController ()<UITableViewDataSource, UITableViewDelegate, MZFormSheetBackgroundWindowDelegate>
 
 @property (nonatomic, weak) IBOutlet UITableView *jobListTableView;
+
 @property (nonatomic, strong) NSArray *jobList;
 @property (nonatomic, strong) NSDictionary *SchedulesContainer;
+@property (nonatomic, strong) UIImagePickerController *imagePicker;
+
 @end
 
 @implementation JobListViewController
@@ -24,6 +27,14 @@
     myDatabase = [Database sharedMyDbManager];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didScanQrCodeForJobList:) name:@"didScanQrCodeForJobList" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didTapScanReportQRCode:) name:@"didTapScanReportQRCode" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didTapRoofAccess:) name:@"didTapRoofAccess" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didScanQRCodeForRoofAccessCheck:) name:@"didScanQRCodeForRoofAccessCheck" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getJobList) name:UIApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -38,23 +49,54 @@
     // Dispose of any resources that can be recreated.
 }
 
+-(void)didScanQRCodeForRoofAccessCheck:(NSNotification *)notif
+{
+    NSDictionary *dict = [notif userInfo];
+    
+    NSDictionary *params = @{@"blkId":[NSNumber numberWithInt:[[_scheduleDetailDict valueForKey:@"blk_id"] intValue]],@"qrcode":[dict valueForKey:@"scanValue"]};
+    
+    [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url ,api_check_roof_qr_code] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        
+        int RoofCheckSNO = [[responseObject valueForKey:@"RoofCheckSNO"] intValue];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if(RoofCheckSNO == 0)
+            {
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"Invalid QR Code" delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+                
+                [alert show];
+            }
+            else
+            {
+                [self performSegueWithIdentifier:@"push_roof_info" sender:[NSNumber numberWithInt:RoofCheckSNO]];
+            }
+        });
+        
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
+        
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"Request error. Please try again" delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+        
+        [alert show];
+    }];
+}
+
+-(void)didTapScanReportQRCode:(NSNotification *)notif
+{
+    [self mz_dismissFormSheetControllerAnimated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+        [self QrList:self];
+    }];
+}
+
+-(void)didTapRoofAccess:(NSNotification *)notif
+{
+    [self mz_dismissFormSheetControllerAnimated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+        [self performSegueWithIdentifier:@"push_qr_code_scanning_roof_access" sender:self];
+    }];
+}
+
 - (void)didScanQrCodeForJobList:(NSNotification *)notif
 {
-//    {
-//        location = "<+1.38922977,+103.84968376> +/- 65.00m (speed -1.00 mps / course -1.00) @ 23/9/15, 4:17:44 PM Singapore Standard Time";
-//        scanValue = "980_HLC_SCAN_GEN 100652";
-//        scheduleDict =     {
-//            IsUnlock = 1;
-//            Noti = "";
-//            ScheduledDate = 1442937600;
-//            TotalJob = 1;
-//            "blk_id" = 980;
-//            blockDesc = "BLK31 Holland Close";
-//            "block_id" = 980;
-//            "user_id" = bv1;
-//        };
-//    }
-    
     NSDictionary *dict = [notif userInfo];
     
     //check if this qr code is present in rt_qr_code, if so, get the resultset then save it to rt_scanned_qr_code, else display error msg
@@ -136,7 +178,18 @@
         scanQr.scheduleDetailDict = _scheduleDetailDict;
         scanQr.blockId = sender;
     }
-    
+    else if ([segue.identifier isEqualToString:@"push_roof_info"])
+    {
+        RoofAccessInfoViewController *roofAccess = [segue destinationViewController];
+        roofAccess.scheduleDict = _scheduleDetailDict;
+        roofAccess.roofSNo = sender;
+    }
+    else if ([segue.identifier isEqualToString:@"push_qr_code_scanning_roof_access"])
+    {
+        QRCodeScanningViewController *qrCodeScanning = [segue destinationViewController];
+        qrCodeScanning.scheduleDetailDict = _scheduleDetailDict;
+        qrCodeScanning.scanQrCodeForRoofCheckAccess = YES;
+    }
 }
 
 
@@ -162,6 +215,8 @@
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
+        
+        [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
     }];
 }
 
@@ -200,6 +255,40 @@
     NSNumber *blockId = [NSNumber numberWithInt:[[_scheduleDetailDict valueForKey:@"blk_id"] intValue]];
     
     [self performSegueWithIdentifier:@"push_scan_qr_code" sender:blockId];
+}
+
+- (IBAction)jobListActions:(id)sender
+{
+    JobListActionsViewController *jobListAction = [self.storyboard instantiateViewControllerWithIdentifier:@"JobListActionsViewController"];
+    
+    MZFormSheetController *formSheet = [[MZFormSheetController alloc] initWithViewController:jobListAction];
+    
+    formSheet.presentedFormSheetSize = CGSizeMake(300, 180);
+    formSheet.shadowRadius = 2.0;
+    formSheet.shadowOpacity = 0.3;
+    formSheet.shouldDismissOnBackgroundViewTap = YES;
+    formSheet.shouldCenterVertically = YES;
+    formSheet.movementWhenKeyboardAppears = MZFormSheetWhenKeyboardAppearsCenterVertically;
+    
+    // If you want to animate status bar use this code
+    formSheet.didTapOnBackgroundViewCompletionHandler = ^(CGPoint location) {
+        
+    };
+    
+    formSheet.willPresentCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will present");
+    };
+    formSheet.transitionStyle = MZFormSheetTransitionStyleCustom;
+    
+    [MZFormSheetController sharedBackgroundWindow].formSheetBackgroundWindowDelegate = self;
+    
+    [self mz_presentFormSheetController:formSheet animated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+        DDLogVerbose(@"did present");
+    }];
+    
+    formSheet.willDismissCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will dismiss");
+    };
 }
 
 @end

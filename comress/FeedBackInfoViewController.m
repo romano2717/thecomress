@@ -172,7 +172,7 @@
         
         int crmStatusInt = [[dict valueForKey:@"status"] intValue];
         
-        NSString *crmStatusStr;
+        NSString *crmStatusStr = nil;
         
         switch (crmStatusInt) {
             case 1:
