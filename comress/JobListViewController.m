@@ -35,6 +35,8 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didScanQRCodeForRoofAccessCheck:) name:@"didScanQRCodeForRoofAccessCheck" object:nil];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getJobList) name:UIApplicationDidBecomeActiveNotification object:nil];
+    
+    [self.navigationItem.rightBarButtonItem setEnabled:NO];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -195,6 +197,8 @@
 
 - (void)getJobList
 {
+    [self.navigationItem.rightBarButtonItem setEnabled:NO];
+    
     [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     
     NSNumber *blockId = [NSNumber numberWithInt:[[_scheduleDetailDict valueForKey:@"blk_id"] intValue]];
@@ -211,12 +215,15 @@
         
         dispatch_async(dispatch_get_main_queue(), ^{
             [self reloadJobListTable];
+            
+            [self.navigationItem.rightBarButtonItem setEnabled:YES];
         });
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
         
         [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
+        
     }];
 }
 

@@ -8,7 +8,7 @@
 
 #import "Database.h"
 
-static const int newDatabaseVersion = 24; //this database version is incremented everytime the database version is updated
+static const int newDatabaseVersion = 26; //this database version is incremented everytime the database version is updated
 
 @implementation Database
 
@@ -71,6 +71,23 @@ static const int newDatabaseVersion = 24; //this database version is incremented
             _userDictionary = [rs resultDictionary];
         }
     }];
+    
+    NSMutableDictionary *mutDict = [[NSMutableDictionary alloc] initWithDictionary:_userDictionary];
+    
+    NSString *userIdString = nil;
+    
+    if([mutDict valueForKey:@"user_id"] != [NSNull null] && [mutDict valueForKey:@"user_id"] != nil)
+    {
+        if([[mutDict valueForKey:@"user_id"] isKindOfClass:[NSString class]] == NO)
+            userIdString = [[mutDict valueForKey:@"user_id"] stringValue];
+        else
+            userIdString = [mutDict valueForKey:@"user_id"];
+        
+        [mutDict setObject:userIdString forKey:@"user_id"];
+    }
+    
+    
+    _userDictionary = mutDict;
 }
 
 - (void)createDeviceToken
@@ -277,7 +294,11 @@ static const int newDatabaseVersion = 24; //this database version is incremented
                                     @"ALTER TABLE rt_roof_check_image add block_id INTEGER DEFAULT (0)",
                                     
                                     //30-sept-2015 add date for rt_roof_check_image
-                                    @"ALTER TABLE rt_roof_check_image add dateChecked DATE"
+                                    @"ALTER TABLE rt_roof_check_image add dateChecked DATE",
+                                    
+                                    
+                                    //30-sept-2105 add date for block_user_mapping
+                                    @"ALTER TABLE block_user_mapping add dateAdded DATE "
                                     ];
         
         
@@ -293,6 +314,7 @@ static const int newDatabaseVersion = 24; //this database version is incremented
                 {
                     DDLogVerbose(@"warning: %@",[db lastError]);
                 }
+                db.traceExecution = NO;
             }
         }];
         

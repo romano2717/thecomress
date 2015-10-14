@@ -210,10 +210,9 @@ static NSString *kCollapseToken = @" Read Less";
     }else {
         _remarksLabel.numberOfLines = 3;
         [_remarksLabel setText:str withTruncation:YES];
-        _remarksLabel.textColor = [UIColor blackColor];
+        _remarksLabel.textColor = [UIColor whiteColor];
         
         _remarksLabel.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.0f];
-
     }
 }
 

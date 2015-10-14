@@ -62,24 +62,6 @@
     //watcher used in didbecomeactive and reload list
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(downloadNewItems) name:@"downloadNewItems" object:nil];
     
-    //start reachability watchers
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
-    
-    //Change the host name here to change the server you want to monitor.
-//    NSString *remoteHostName = [myDatabase.clientDictionary valueForKey:@"api_url"];
-//
-//    self.hostReachability = [Reachability reachabilityWithHostName:remoteHostName];
-//    [self.hostReachability startNotifier];
-//    [self updateInterfaceWithReachability:self.hostReachability];
-//    
-//    self.internetReachability = [Reachability reachabilityForInternetConnection];
-//    [self.internetReachability startNotifier];
-//    [self updateInterfaceWithReachability:self.internetReachability];
-//    
-//    self.wifiReachability = [Reachability reachabilityForLocalWiFi];
-//    [self.wifiReachability startNotifier];
-//    [self updateInterfaceWithReachability:self.wifiReachability];
-    
     
     if(launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey])
     {
@@ -93,63 +75,101 @@
     //custom objects to pass when app crash
     [[Crashlytics sharedInstance] setObjectValue:myDatabase.userDictionary forKey:@"user"];
     [[Crashlytics sharedInstance] setObjectValue:myDatabase.clientDictionary forKey:@"client"];
+    
+    
+    
+    if(launchOptions != nil)
+    {
+        NSDictionary *remoteNotif = [launchOptions objectForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
 
+        if(remoteNotif != nil)
+        {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self gotoPostAfterLaunchFromNotifLaunchOPts:remoteNotif];
+            });
+        }
+    }
     
     return YES;
 }
 
+- (void)gotoPostAfterLaunchFromNotifLaunchOPts:(NSDictionary *)remoteNotif
+{
+    //download post
 
-/*!
- * Called by Reachability whenever status changes.
- */
-//- (void) reachabilityChanged:(NSNotification *)note
-//{
-//    Reachability* curReach = [note object];
-//    NSParameterAssert([curReach isKindOfClass:[Reachability class]]);
-//    [self updateInterfaceWithReachability:curReach];
-//}
-//
-//
-//- (void)updateInterfaceWithReachability:(Reachability *)reachability
-//{
-//    if (reachability == self.hostReachability)
-//    {
-//        [self configureConnectionWithReachability:reachability];
-//    }
-//    
-//    if (reachability == self.internetReachability)
-//    {
-//        [self configureConnectionWithReachability:reachability];
-//    }
-//    
-//    if (reachability == self.wifiReachability)
-//    {
-//        [self configureConnectionWithReachability:reachability];
-//    }
-//}
-//
-//
-//- (void)configureConnectionWithReachability:(Reachability *)reachability
-//{
-//    NetworkStatus netStatus = [reachability currentReachabilityStatus];
-//    
-//    switch (netStatus)
-//    {
-//        case NotReachable:        {
-//            //[sync stopSynchronize];
-//            //break;
-//        }
-//            
-//        case ReachableViaWWAN:        {
-//            //[sync kickStartSync];
-//            //break;
-//        }
-//        case ReachableViaWiFi:        {
-//            //[sync kickStartSync];
-//            //break;
-//        }
-//    }
-//}
+    __block NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        FMResultSet *rs = [db executeQuery:@"select date from post_last_request_date"];
+        
+        if([rs next])
+        {
+            jsonDate = (NSDate *)[rs dateForColumn:@"date"];
+            
+        }
+    }];
+    
+    [sync startDownloadPostForPage:1 totalPage:0 requestDate:jsonDate];
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        //download comments
+        FMResultSet *rs3 = [db executeQuery:@"select date from comment_last_request_date"];
+        
+        if([rs3 next])
+        {
+            jsonDate = (NSDate *)[rs3 dateForColumn:@"date"];
+        }
+    }];
+    [sync startDownloadCommentsForPage:1 totalPage:0 requestDate:jsonDate];
+    
+    
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        //download comment noti
+        FMResultSet *rs4 = [db executeQuery:@"select date from comment_noti_last_request_date"];
+        
+        if([rs4 next])
+        {
+            jsonDate = (NSDate *)[rs4 dateForColumn:@"date"];
+        }
+    }];
+    [sync startDownloadCommentNotiForPage:1 totalPage:0 requestDate:jsonDate];
+    
+    
+
+    [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:@"previousPostRequestDateTime"];
+    
+    
+    //display post
+    DDLogVerbose(@"remoteNotif %@",remoteNotif);
+    int postId = [[remoteNotif valueForKey:@"post"] intValue];
+    
+    if(postId == 0)
+        postId = [[remoteNotif valueForKey:@"comment"] intValue];
+    
+    __block BOOL postExists = NO;
+    __block NSDictionary *goToPosDict = nil;
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        db.traceExecution = YES;
+        
+        if(postId > 0)
+        {
+            FMResultSet *rs = [db executeQuery:@"select * from post where post_id = ?",[NSNumber numberWithInt:postId]];
+            db.traceExecution = NO;
+            postExists = [rs next];
+            goToPosDict = [rs resultDictionary];
+        }
+    }];
+    
+    if(postExists)
+    {
+        DDLogVerbose(@"postExists");
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"gotoPostFromNotif" object:nil userInfo:goToPosDict];
+    }
+    else
+        DDLogVerbose(@"post does not exist");
+}
 
 - (void)createBackgroundTaskWithSync:(BOOL)withSync
 {
@@ -484,23 +504,35 @@
 //    IMAGE = "13";
 //    SURVEY = "14";
     
-    __block int allowanceSecondsBetweenRequests = 10;
+    __block int allowanceSecondsBetweenRequests = -1;
 
     int silentRemoteNotifValue = [[userInfo valueForKeyPath:@"aps.content-available"] intValue];
     
-    DDLogVerbose(@"silentRemoteNotifValue %d",silentRemoteNotifValue);
+    __block NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+    
+    DDLogVerbose(@"userInfo %@",userInfo);
+    
+    //application.applicationIconBadgeNumber += 1; badge should be set by server
     
     if(silentRemoteNotifValue == 0)
     {
-        //loud notification. increment app icon badge
-        application.applicationIconBadgeNumber += 1;
+        int postId = [[userInfo valueForKey:@"post"] intValue];
+        
+        if(postId == 0)
+            postId = [[userInfo valueForKey:@"comment"] intValue];
+
+        
+        
+        if(postId > 0)
+        {
+            if(application.applicationState != UIApplicationStateActive)
+                [self gotoPostAfterLaunchFromNotifLaunchOPts:userInfo];
+        }
+
         return;
     }
     
     
-    __block NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-    
-
     switch (silentRemoteNotifValue) {
         case 12:
         {
@@ -511,7 +543,8 @@
             
             if(secondsBetween <= allowanceSecondsBetweenRequests)
             {
-                DDLogVerbose(@"ignore extra notif");
+                DDLogVerbose(@"ignore extra notif comment");
+                DDLogVerbose(@"secondsBetween %f",secondsBetween);
                 break;
             }
             
@@ -558,7 +591,8 @@
             
             if(secondsBetween <= allowanceSecondsBetweenRequests)
             {
-                DDLogVerbose(@"ignore extra notif");
+                DDLogVerbose(@"ignore extra notif image");
+                DDLogVerbose(@"secondsBetween %f",secondsBetween);
                 break;
             }
             
@@ -592,7 +626,9 @@
             
             if(secondsBetween <= allowanceSecondsBetweenRequests)
             {
-                DDLogVerbose(@"ignore extra notif");
+                DDLogVerbose(@"ignore extra notif survey");
+                DDLogVerbose(@"secondsBetween %f",secondsBetween);
+
                 break;
             }
             
@@ -636,7 +672,9 @@
             
             if(secondsBetween <= allowanceSecondsBetweenRequests)
             {
-                DDLogVerbose(@"ignore extra notif");
+                DDLogVerbose(@"ignore extra notif post");
+                DDLogVerbose(@"secondsBetween %f",secondsBetween);
+
                 break;
             }
             
@@ -650,6 +688,32 @@
                 }
             }];
             [sync startDownloadPostForPage:1 totalPage:0 requestDate:jsonDate];
+            
+            [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+                //download comments
+                FMResultSet *rs3 = [db executeQuery:@"select date from comment_last_request_date"];
+                
+                if([rs3 next])
+                {
+                    jsonDate = (NSDate *)[rs3 dateForColumn:@"date"];
+                }
+            }];
+            [sync startDownloadCommentsForPage:1 totalPage:0 requestDate:jsonDate];
+            
+            
+            
+            [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+                //download comment noti
+                FMResultSet *rs4 = [db executeQuery:@"select date from comment_noti_last_request_date"];
+                
+                if([rs4 next])
+                {
+                    jsonDate = (NSDate *)[rs4 dateForColumn:@"date"];
+                }
+            }];
+            [sync startDownloadCommentNotiForPage:1 totalPage:0 requestDate:jsonDate];
+            
+            
             DDLogVerbose(@"REQUEST");
             DDLogVerbose(@"---------------");
             [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:@"previousPostRequestDateTime"];

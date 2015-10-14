@@ -59,6 +59,21 @@
     }
     
     [self setViewControllers: tabbarViewControllers];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(gotoTab:) name:@"gotoTab" object:nil];
+}
+
+- (void)gotoTab:(NSNotification *)notif
+{
+    NSDictionary *tabDict = [notif userInfo];
+    
+    int tab = [[tabDict valueForKey:@"tab"] intValue];
+    
+    UINavigationController *currentVc = [self selectedViewController];
+    
+    [currentVc popToRootViewControllerAnimated:YES];
+    
+    [self setSelectedIndex:tab];
 }
 
 - (void)viewWillAppear:(BOOL)animated

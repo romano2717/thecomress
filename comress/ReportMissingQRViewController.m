@@ -17,6 +17,8 @@
 @property (nonatomic, strong) NSMutableArray *blocksArray;
 
 @property (nonatomic, strong) NSDictionary *selectedBlock;
+
+@property (nonatomic, assign) BOOL willDisappear;
 @end
 
 @implementation ReportMissingQRViewController
@@ -41,6 +43,13 @@
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    
+    _willDisappear = YES;
 }
 
 
@@ -106,6 +115,9 @@
 
 - (void)textField:(MPGTextField *)textField didEndEditingWithSelection:(NSDictionary *)result
 {
+    if(_willDisappear == YES)
+        return;
+    
     if([[result valueForKey:@"CustomObject"] isKindOfClass:[NSDictionary class]] == NO) //user typed some shit!
         return;
     

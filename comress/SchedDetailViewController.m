@@ -42,6 +42,8 @@
     myDatabase = [Database sharedMyDbManager];
     routineSync = [RoutineSynchronize sharedRoutineSyncManager];
     
+    [self.navigationItem.rightBarButtonItem setEnabled:NO];
+    
     //add border to remarks textview
     [[_remarksTextView layer] setBorderColor:[[UIColor lightGrayColor] CGColor]];
     [[_remarksTextView layer] setBorderWidth:1];
@@ -251,22 +253,26 @@
         [mutScheduleDict setObject:ImageListArray forKey:@"ImageList"];
         [mutScheduleDict setObject:ImageTemplateArray forKey:@"ImageTemplate"];
         [mutScheduleDict setObject:SUPSchedule forKey:@"SUPSchedule"];
-        [mutScheduleDict setObject:[_scheduleDetailDictionary valueForKey:@"HasChanges"] forKey:@"HasChanges"];
+        
+        if([_scheduleDetailDictionary valueForKey:@"HasChanges"] != [NSNull null] && [_scheduleDetailDictionary valueForKey:@"HasChanges"] != nil)
+            [mutScheduleDict setObject:[_scheduleDetailDictionary valueForKey:@"HasChanges"] forKey:@"HasChanges"];
+        else
+            [mutScheduleDict setObject:[NSNumber numberWithBool:YES] forKey:@"HasChanges"];
         
         
         //get the  number of paired images for this schedule
-        NSArray *theChecklistArray = [mutScheduleDict objectForKey:@"CheckListArray"];
+        NSArray *theImageTemplateArray = [mutScheduleDict objectForKey:@"ImageTemplate"];
         int imgPairCtr = 0;
-        for (NSDictionary *dict in theChecklistArray) {
+        for (NSDictionary *dict in theImageTemplateArray) {
             NSNumber *checklistId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
             
             NSNumber *beforeImageType = [NSNumber numberWithInt:1];
             NSNumber *afterImageType = [NSNumber numberWithInt:2];
-            
+
             FMResultSet *rsCheckForBeforeImg = [db executeQuery:@"select * from rt_schedule_image where schedule_id = ? and checklist_id = ? and image_type = ?",theSelectedScheduleId,checklistId,beforeImageType];
             
             FMResultSet *rsCheckForAfterImg = [db executeQuery:@"select * from rt_schedule_image where schedule_id = ? and checklist_id = ? and image_type = ?",theSelectedScheduleId,checklistId,afterImageType];
-            
+
 
             if([rsCheckForBeforeImg next] && [rsCheckForAfterImg next])
                 imgPairCtr++;
@@ -281,7 +287,23 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         
         _scheduleDetailDictionary = mutScheduleDict;
-        //DDLogVerbose(@"%@",_scheduleDetailDictionary);
+        
+        if(_scheduleDetailDictionary == nil)
+        {
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"Failed to get schedule detail. Please try again." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+            
+            [alert show];
+            
+            return;
+        }
+        int theStatusOfSked = [[_scheduleDetailDictionary valueForKeyPath:@"SUPSchedule.Status"] intValue];
+        
+        if(theStatusOfSked == 3)//complete
+        {
+            _remarksTextView.userInteractionEnabled = NO;
+        }
+        
+        DDLogVerbose(@"%@",_scheduleDetailDictionary);
         
         //SCHEDULE DATE
         NSDate *ScheduleDate = [myDatabase createNSDateWithWcfDateString:[[_scheduleDetailDictionary objectForKey:@"SUPSchedule"] valueForKey:@"ScheduleDate"]];
@@ -446,6 +468,10 @@
 
 - (void)getScheduleDetail
 {
+    [self.navigationItem.rightBarButtonItem setEnabled:NO];
+    
+    _scheduleDetailDictionary = nil;
+    
     [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     
     NSDictionary *params = @{@"scheduleId":[_jobDetailDict valueForKey:@"ScheduleId"],@"ignoreCache":[NSNumber numberWithBool:NO]};
@@ -453,6 +479,7 @@
     [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url ,api_get_schedule_detail_by_sup] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
         
         _scheduleDetailDictionary = [responseObject objectForKey:@"ScheduleDetail"];
+        
         BOOL HasChanges = [[[responseObject objectForKey:@"ScheduleDetail"] valueForKey:@"HasChanges"] boolValue];
         
         if(HasChanges == YES)
@@ -464,11 +491,16 @@
         
         [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
         
+        [self.navigationItem.rightBarButtonItem setEnabled:YES];
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         DDLogVerbose(@"%@ [%@-%@]",error.localizedDescription,THIS_FILE,THIS_METHOD);
         
         [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
+        
+        [self retrieveLocalScheduleDetail];
+        
+        [self.navigationItem.rightBarButtonItem setEnabled:YES];
     }];
 }
 
@@ -641,13 +673,35 @@
 
 - (IBAction)addOptionalPhoto:(id)sender
 {
-    _imageType = 1;
+    int theStatusOfSked = [[_scheduleDetailDictionary valueForKeyPath:@"SUPSchedule.Status"] intValue];
+    
+    if(theStatusOfSked == 3)//complete
+    {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"This schedule is already completed. Additional photo is not required." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+        
+        [alert show];
+        
+        return;
+    }
+    
+    _imageType = 0;
     _selectedImageTemplateDict = @{@"ScheduleId":[NSNumber numberWithInt:[[_jobDetailDict valueForKey:@"ScheduleId"] intValue]]};
     [self openMediaByType:1];
 }
 
 - (IBAction)addMorePhotos:(id)sender
 {
+    int theStatusOfSked = [[_scheduleDetailDictionary valueForKeyPath:@"SUPSchedule.Status"] intValue];
+    
+    if(theStatusOfSked == 3)//complete
+    {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"This schedule is already completed. Additional photo is not required." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+        
+        [alert show];
+        
+        return;
+    }
+    
     UITapGestureRecognizer *tap = sender;
     
     UIView* view = tap.view;
@@ -888,7 +942,7 @@
         PerformCheckListViewController *checkList = [self.storyboard instantiateViewControllerWithIdentifier:@"PerformCheckListViewController"];
 
         checkList.scheduleDict = _scheduleDetailDictionary;
-        DDLogVerbose(@"clean _checkListArray %@",[_scheduleDetailDictionary objectForKey:@"CheckListArray"]);
+
         MZFormSheetController *formSheet = [[MZFormSheetController alloc] initWithViewController:checkList];
         
         formSheet.presentedFormSheetSize = CGSizeMake(300, 350);
@@ -917,7 +971,7 @@
         formSheet.willDismissCompletionHandler = ^(UIViewController *presentedFSViewController) {
             DDLogVerbose(@"will dismiss");
             
-            [self getScheduleDetail];
+            [self retrieveLocalScheduleDetail];
         };
     });
 }

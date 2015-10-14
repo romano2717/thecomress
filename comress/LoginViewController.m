@@ -258,6 +258,7 @@
                         [Answers logCustomEventWithName:@"login" customAttributes:myDatabase.userDictionary];
                         
                         [sync downloadUserSettings];
+                        [sync downloadActionSettings];
                         [self performSegueWithIdentifier:@"push_main_view" sender:self];
                     }
                     else

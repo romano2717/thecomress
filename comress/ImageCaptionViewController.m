@@ -54,9 +54,12 @@
     
     DDLogVerbose(@"%@",_scheduleDetailDict);
     
-    NSString *imageType = @"Before";
+    NSString *imageType = @"";
+
+    if([[_scheduleDetailDict valueForKey:@"imageType"] intValue] == 1)
+        imageType = @"Before";
     
-    if([[_scheduleDetailDict valueForKey:@"imageType"] intValue] == 2)
+    else if([[_scheduleDetailDict valueForKey:@"imageType"] intValue] == 2)
         imageType = @"After";
     
     _imageView.image = [_scheduleDetailDict objectForKey:@"image"];

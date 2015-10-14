@@ -61,8 +61,12 @@
             if([rs2 next])
                 userFullNameLabel.text = [rs2 stringForColumn:@"full_name"];
         }
-        
+#if DEBUG
+        userFullNameLabel.text = [NSString stringWithFormat:@"%@-%@",users.full_name,users.group_name];
+#else
         userFullNameLabel.text = users.full_name;
+#endif
+        
     }];
     
     
@@ -346,6 +350,14 @@
         
         FMResultSet *rsPostCheck = [db executeQuery:@"select post_id from post where post_id = ? or post_id is null",zero];
         if([rsPostCheck next] == YES)
+            everythingIsSync = NO;
+        
+        FMResultSet *rsCommentCheck = [db executeQuery:@"select comment_id from comment where comment_id = ? or comment_id is null",zero];
+        if([rsCommentCheck next] == YES)
+            everythingIsSync = NO;
+        
+        FMResultSet *rsPostImageCheck = [db executeQuery:@"select post_image_id from post_image where post_image_id = ? or post_image_id is null",zero];
+        if([rsPostImageCheck next] == YES)
             everythingIsSync = NO;
         
         FMResultSet *rsSurveyCheck = [db executeQuery:@"select survey_id from su_survey where survey_id = ? and status = ?",zero,one];

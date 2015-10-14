@@ -175,6 +175,8 @@
 {
     if(_scanValue != nil && _scanValue.length != 0)
     {
+        _scanBtn.enabled = NO;
+        
         [self stopScanning];
         
         [self.view viewWithTag:100].hidden = NO;

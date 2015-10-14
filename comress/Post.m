@@ -182,8 +182,8 @@ contract_type;
                 
                 else // Others
                 {
-                    //q = [[NSMutableString alloc] initWithString:@"select * from post where post_type = 1 " ]; //post_type = 1 is ISSUES
-                    q = [[NSMutableString alloc] initWithString:@"select * from post where post_type = 1 and block_id NOT IN (select block_id from blocks_user) "];
+                    //q = [[NSMutableString alloc] initWithString:@"select * from post where post_type = 1 and block_id NOT IN (select block_id from blocks_user) "];
+                    q = [[NSMutableString alloc] initWithString:[NSString stringWithFormat:@"select * from post where post_type = 1 and block_id in (select block_id from block_user_mapping where user_id != '%@')",[myDatabase.userDictionary valueForKey:@"user_id"]]];
                 }
             }
             
@@ -217,7 +217,7 @@ contract_type;
             while ([rsPost next]) {
                 NSNumber *clientPostId = [NSNumber numberWithInt:[rsPost intForColumn:@"client_post_id"]];
                 NSNumber *serverPostId = [NSNumber numberWithInt:[rsPost intForColumn:@"post_id"]];
-
+                
                 //if the post is Closed and updated_on is more than 3 days ago, skip it
                 int thePostStatus = [rsPost intForColumn:@"status"];
                 NSDate *theLastUpdatedDate = [rsPost dateForColumn:@"updated_on"];
@@ -350,8 +350,10 @@ contract_type;
                 //change the post_by of this post based on who's PO this block belongs to
                 NSMutableDictionary *mutablePostDict = [[NSMutableDictionary alloc] initWithDictionary:[rsPost resultDictionary]];
                 
-                FMResultSet *rsGetPoOfThisBlock = [db executeQuery:@"select user_id from block_user_mapping where block_id = ?",[NSNumber numberWithInt:[[mutablePostDict valueForKey:@"block_id"] intValue]]];
+                NSString *userId = [NSString stringWithFormat:@"%@",[[myDatabase.userDictionary valueForKey:@"user_id"] lowercaseString]];
                 
+                FMResultSet *rsGetPoOfThisBlock = [db executeQuery:@"select user_id from block_user_mapping where block_id = ? and lower(user_id) != ?",[NSNumber numberWithInt:[[mutablePostDict valueForKey:@"block_id"] intValue]],userId];
+
                 int multiBlockAssignmentCtr = 0;
                 while ([rsGetPoOfThisBlock next]) {
                     if(multiBlockAssignmentCtr == 0)
@@ -713,7 +715,7 @@ contract_type;
             
             while ([rsGetUsers next]) {
                 
-                NSString *userId = [[rsGetUsers stringForColumn:@"user_id"] lowercaseString];
+                NSString *userId = [NSString stringWithFormat:@"%@",[[rsGetUsers stringForColumn:@"user_id"] lowercaseString]] ;
                 
                 //count how many post belong to this user under this division
                 FMResultSet *rsPostCount = [db executeQuery:@"select count(*) as count from post p left join block_user_mapping bum on p.block_id=bum.block_id where lower(bum.user_id) = ? and bum.division = ?",userId,[divisionArray objectAtIndex:i]];

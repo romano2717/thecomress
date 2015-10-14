@@ -74,36 +74,6 @@
     [_checkListTableView setExclusiveSections:YES];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didTapSectionNotification:) name:@"didTapSectionNotification" object:nil];
-    
-    
-    //saved all the checked checklist from db
-    if(_checkAreaArray.count > 0)
-    {
-        for (NSArray *arr in _checkListArray) {
-            for (NSDictionary *dict in arr) {
-                BOOL isChecked = [[dict valueForKey:@"IsCheck"] boolValue];
-                NSNumber *checklistId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
-                
-                if(isChecked)
-                {
-                    if([_checkedCheckListArray containsObject:checklistId] == NO)
-                        [_checkedCheckListArray addObject:checklistId];
-                }
-            }
-        }
-    }
-    else
-    {
-        for (NSDictionary *dict in _checkListArray) {
-            BOOL isChecked = [[dict valueForKey:@"IsCheck"] boolValue];
-            NSNumber *checklistId = [NSNumber numberWithInt:[[dict valueForKey:@"CheckListId"] intValue]];
-            if(isChecked)
-            {
-                if([_checkedCheckListArray containsObject:checklistId] == NO)
-                    [_checkedCheckListArray addObject:checklistId];
-            }
-        }
-    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -129,7 +99,7 @@
                 if(isChecked == NO)
                 {
                     checkedAllUnderSection = NO;
-                    break;
+                    continue;
                 }
                 else
                 {
@@ -167,8 +137,6 @@
         if(_checkedCheckListArray.count == _checkListArray.count)
             _checkAllBtn.selected = YES;
     }
-    
-    DDLogVerbose(@"_checkedCheckListArray %@",_checkedCheckListArray);
     
     [_checkListTableView reloadData];
 }
@@ -371,11 +339,13 @@
                 if([_checkedCheckListArray containsObject:checkListId])
                     toggle = [NSNumber numberWithBool:YES];
                 
-                DDLogVerbose(@"_checkedCheckListArray %@",_checkedCheckListArray);
-                db.traceExecution = YES;
+                DDLogVerbose(@"save _checkedCheckListArray %@",_checkedCheckListArray);
+                db.traceExecution = NO;
                 up = [db executeUpdate:@"update rt_checklist set is_checked = ? where checklist_id = ? and schedule_id = ?",toggle,checkListId,scheduleId];
                 db.traceExecution = NO;
-                DDLogVerbose(@"row affected %d",[db changes]);
+                FMResultSet *rs = [db executeQuery:@"select * from rt_checklist where checklist_id = ? and schedule_id = ?",checkListId,scheduleId];
+                [rs next];
+                DDLogVerbose(@"after update %@",[rs resultDictionary]);
             }
         }
 
@@ -502,7 +472,7 @@
             _checkAllBtn.selected = NO;
     }
     
-    DDLogVerbose(@"%@",_checkedCheckListArray);
+    DDLogVerbose(@"selected %@",_checkedCheckListArray);
     
     [_checkListTableView reloadData];
 }

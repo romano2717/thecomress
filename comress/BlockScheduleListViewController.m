@@ -271,24 +271,35 @@
             
             if([userGroup isEqualToString:@"CT_NU"])
             {
+                q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bm.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.user_id = '%@' and bm.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId];
                 
+                if(self.segment.selectedSegmentIndex == 1)
+                {
+                    q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bm.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.user_id = '%@' and bm.user_id != '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId];
+                }
             }
             else if ([userGroup isEqualToString:@"CT_SA"])
             {
-            
+                q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id, bm.user_id, bs.schedule_date as ScheduledDate, bs.user_id as bsUserId from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.blk_id in (select block_id from block_user_mapping) and bs.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId];
+                
+                if(self.segment.selectedSegmentIndex == 1)
+                {
+                    q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id, bm.user_id, bs.schedule_date as ScheduledDate, bs.user_id as bsUserId from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.blk_id not in (select block_id from block_user_mapping) and bs.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId];
+                }
             }
             else if ([userGroup isEqualToString:@"CT_SUP"])
             {
+                q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id, bm.user_id, bs.schedule_date as ScheduledDate, bs.user_id as bsUserId from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.blk_id in (select block_id from block_user_mapping where supervisor_id = '%@' or user_id = '%@') and bs.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId,userId];
                 
+                if(self.segment.selectedSegmentIndex == 1)
+                {
+                    q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id, bm.user_id, bs.schedule_date as ScheduledDate, bs.user_id as bsUserId from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.blk_id in (select block_id from block_user_mapping where supervisor_id != '%@') and bs.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId];
+                }
+
             }
             
 
-            q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bm.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.user_id = '%@' and bm.user_id = '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId];
 
-            if(self.segment.selectedSegmentIndex == 1)
-            {
-                q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bm.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.user_id = '%@' and bm.user_id != '%@' order by schedule_date asc",scheduleDateEpoch,userId,userId];
-            }
             FMResultSet *rsSked = [db executeQuery:q];
 
             while ([rsSked next]) {
@@ -297,7 +308,7 @@
             
             _blockScheduleArray = blockSchedArr;
             
-            if(self.segment.selectedSegmentIndex == 1)
+            if(self.segment.selectedSegmentIndex == 1 && [userGroup isEqualToString:@"CT_NU"])
                 [self groupScheduleForOthers];
             
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -614,10 +625,10 @@
     [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
         
 
-        NSString *userId = [NSString stringWithFormat:@"%@",[myDatabase.userDictionary valueForKey:@"user_id"]];
+        NSString *userId = [[NSString stringWithFormat:@"%@",[myDatabase.userDictionary valueForKey:@"user_id"]] lowercaseString];
         
         
-       NSString *q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bm.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and bs.user_id = '%@' and bm.user_id = '%@' and bs.blk_id = %d order by schedule_date asc",scheduleDateEpoch,userId,userId,blockId];
+       NSString *q = [NSString stringWithFormat:@"select (b.block_no || ' ' || b.street_name) as blockDesc, bs.noti_message as Noti, bs.no_of_job as TotalJob, bs.blk_id,bs.unlock as IsUnlock, bm.block_id,bs.user_id, bs.schedule_date as ScheduledDate from rt_blk_schedule bs left join blocks b on bs.blk_id = b.block_id left join block_user_mapping bm on bs.blk_id = bm.block_id where schedule_date = %@ and lower(bs.user_id) = '%@' and ( lower(bm.user_id) = '%@' or lower(bm.supervisor_id) = '%@' ) and bs.blk_id = %d order by schedule_date asc",scheduleDateEpoch,userId,userId,userId,blockId];
         DDLogVerbose(@"%@",q);
         FMResultSet *rs = [db executeQuery:q];
         
@@ -625,6 +636,14 @@
             theDict = [rs resultDictionary];
         }
     }];
+    
+    if(theDict == nil)
+    {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"COMRESS" message:@"Cannot find schedule" delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+        [alert show];
+        
+        return;
+    }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:@"didScanQrCodePerBlock" object:nil userInfo:@{@"location":[dict objectForKey:@"location"],@"scanValue":[dict valueForKey:@"scanValue"],@"scheduleDict":@{@"ScheduledDate":scheduleDateEpoch,@"blk_id":[NSNumber numberWithInt:blockId]}}];
     

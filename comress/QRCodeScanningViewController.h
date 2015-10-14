@@ -21,6 +21,7 @@
 @property (nonatomic, strong) NSString *scanValue;
 @property (nonatomic, strong) MTBBarcodeScanner *scanner;
 @property (nonatomic, weak) IBOutlet UIView *previewView;
+@property (nonatomic, weak) IBOutlet UIButton *scanBtn;
 //todo: add outlet for label in camera view and hide it after scanning
 
 

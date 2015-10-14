@@ -248,7 +248,9 @@
                 NSString *UserId = [[theDict valueForKey:@"UserId"] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                 NSString *division = [[theDict valueForKey:@"DivName"] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                 
-                BOOL ins = [db executeUpdate:@"insert into block_user_mapping(block_id, supervisor_id, user_id, division) values (?,?,?,?)",BlkId,SupervisorId,UserId,division];
+                NSDate *now = [NSDate date];
+                
+                BOOL ins = [db executeUpdate:@"insert into block_user_mapping(block_id, supervisor_id, user_id, division, dateAdded) values (?,?,?,?,?)",BlkId,SupervisorId,UserId,division,now];
                 
                 if(!ins)
                 {

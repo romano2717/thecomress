@@ -25,6 +25,11 @@
 
 @property (nonatomic, assign) NSInteger previouslyOpenSection;
 
+@property (nonatomic, strong) NSMutableArray *disabledSegments;
+@property (nonatomic, assign) int previouslySelectedSegment;
+
+@property (nonatomic) BOOL didFinishedFetching;
+
 @end
 
 @implementation IssuesViewController
@@ -40,6 +45,8 @@
     
     comment = [[Comment alloc] init];
     user = [[Users alloc] init];
+    
+    _disabledSegments = [[NSMutableArray alloc] init];
     
     tableViewRowHeight = 115.0f;
     
@@ -81,6 +88,38 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeIssueActionSubmitFromList:) name:@"closeIssueActionSubmitFromList" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeCloseIssueActionSubmitFromList) name:@"closeCloseIssueActionSubmitFromList" object:nil];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(gotoPostFromNotif:) name:@"gotoPostFromNotif" object:nil];
+    
+    
+    if([[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"SA"] || [[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"GM"])//remove ME Overdue
+    {
+        [self.segment setWidth:1.0 forSegmentAtIndex:0];
+        [self.segment setWidth:1.0 forSegmentAtIndex:2];
+        
+        [_disabledSegments addObject:[NSNumber numberWithInt:0]];
+        [_disabledSegments addObject:[NSNumber numberWithInt:2]];
+    }
+    
+    if([[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"CT_SA"])//remove Others
+    {
+        [self.segment setWidth:1.0 forSegmentAtIndex:1];
+        
+        [_disabledSegments addObject:[NSNumber numberWithInt:1]];
+    }
+}
+
+- (void)gotoPostFromNotif:(NSNotification *)notif
+{
+    //goto issues tab first
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"gotoTab" object:nil userInfo:@{@"tab":[NSNumber numberWithInt:0]}];
+    
+    NSDictionary *dict = [notif userInfo];
+    int clientPostId = [[dict valueForKey:@"client_post_id"] intValue];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self performSegueWithIdentifier:@"push_chat_issues" sender:[NSNumber numberWithInt:clientPostId]];
+    });
 }
 
 - (void)thereAreOVerDueIssues:(NSNotification *)notif
@@ -108,11 +147,10 @@
     NSIndexPath *indexpath = [indexPathsOfNewPostsArray objectAtIndex:currentIndexSelected];
     
     [self.issuesTable openSection:indexpath.section animated:YES];
-
     [self.issuesTable scrollToRowAtIndexPath:indexpath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
     
     [self.issuesTable selectRowAtIndexPath:indexpath animated:YES scrollPosition:UITableViewScrollPositionNone];
-
+    
     if(currentIndexSelected >= indexPathsOfNewPostsArray.count - 1)
         currentIndexSelected = 0;
     else
@@ -139,24 +177,26 @@
 {
     if(self.isViewLoaded && self.view.window) //only reload the list if this VC is active
     {
-        int allowanceSecondsBetweenRequests = 5;
+        int allowanceSecondsBetweenRequests = -1;
         
         NSDate *rightNow = [NSDate date];
         NSDate *previousReloadRequestDateTime = [[NSUserDefaults standardUserDefaults] objectForKey:@"previousReloadRequestDateTime"];
         
         NSTimeInterval secondsBetween = [rightNow timeIntervalSinceDate:previousReloadRequestDateTime];
-        DDLogVerbose(@"secondsBetween %f",secondsBetween);
-        if(secondsBetween <= allowanceSecondsBetweenRequests)
-        {
-            DDLogVerbose(@"ignore extra notif");
-            return;
-        }
+//        DDLogVerbose(@"secondsBetween %f",secondsBetween);
+//        if(secondsBetween <= allowanceSecondsBetweenRequests)
+//        {
+//            DDLogVerbose(@"ignore extra notif list");
+//            return;
+//        }
         
         [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:@"previousReloadRequestDateTime"];
         
-        [self fetchPostsWithNewIssuesUp:NO];
-        
-        DDLogVerbose(@"RELOAD!!!!!");
+        if(_didFinishedFetching == YES)
+        {
+            [self fetchPostsWithNewIssuesUp:NO];
+            DDLogVerbose(@"RELOAD!!!!!");
+        }
     }
     
 }
@@ -195,6 +235,17 @@
 {
     previouslyOpenSection = 0;
     
+    int selectedSegment = (int)self.segment.selectedSegmentIndex;
+    
+    if([_disabledSegments containsObject:[NSNumber numberWithInt:selectedSegment]])
+    {
+        [self.segment setSelectedSegmentIndex:_previouslySelectedSegment];
+
+        return;
+    }
+    
+    _previouslySelectedSegment = (int)self.segment.selectedSegmentIndex;
+    
     [self fetchPostsWithNewIssuesUp:NO];
 }
 
@@ -228,6 +279,12 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    
+    //auto select Others segment
+    if([[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"SA"] || [[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"GM"])
+    {
+        [self.segment setSelectedSegmentIndex:1];
+    }
     
     if(myDatabase.initializingComplete == 1)
     {
@@ -582,6 +639,8 @@
     if(myDatabase.initializingComplete == 0)
         return;
     
+    _didFinishedFetching = NO;
+    
 //    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @try {
             post = nil;
@@ -720,7 +779,8 @@
 //                for (int i = 0; i < self.sectionHeaders.count; i++) {
 //                    [self.issuesTable openSection:i animated:NO];
 //                }
-                
+              
+                _didFinishedFetching = YES;
             });
         }
         @catch (NSException *exception) {
