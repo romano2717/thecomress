@@ -392,4 +392,8 @@
     return NSNotFound;
 }
 
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"tableWasDragged" object:nil];
+}
 @end

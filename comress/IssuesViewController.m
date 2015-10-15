@@ -24,6 +24,8 @@
 @property (nonatomic) CGFloat tableViewRowHeight;
 
 @property (nonatomic, assign) NSInteger previouslyOpenSection;
+@property (nonatomic, strong) NSMutableArray *visibleNewIndexPaths;
+@property (nonatomic, strong) NSIndexPath *lastIndexPath;
 
 @property (nonatomic, strong) NSMutableArray *disabledSegments;
 @property (nonatomic, assign) int previouslySelectedSegment;
@@ -34,7 +36,7 @@
 
 @implementation IssuesViewController
 
-@synthesize selectedContractTypeId,indexPathsOfNewPostsArray,currentIndexSelected,tableViewRowHeight,sectionsWithNewCommentsArray,previouslyOpenSection;
+@synthesize selectedContractTypeId,indexPathsOfNewPostsArray,currentIndexSelected,tableViewRowHeight,sectionsWithNewCommentsArray,previouslyOpenSection,visibleNewIndexPaths;
 
 
 - (void)viewDidLoad {
@@ -46,6 +48,7 @@
     comment = [[Comment alloc] init];
     user = [[Users alloc] init];
     
+    visibleNewIndexPaths = [[NSMutableArray alloc] init];
     _disabledSegments = [[NSMutableArray alloc] init];
     
     tableViewRowHeight = 115.0f;
@@ -89,6 +92,8 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeCloseIssueActionSubmitFromList) name:@"closeCloseIssueActionSubmitFromList" object:nil];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(gotoPostFromNotif:) name:@"gotoPostFromNotif" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(tableWasDragged) name:@"tableWasDragged" object:nil];
     
     
     if([[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"SA"] || [[myDatabase.userDictionary valueForKey:@"group_name"] isEqualToString:@"GM"])//remove ME Overdue
@@ -136,7 +141,7 @@
     
     currentIndexSelected = 0;
     
-    [self.bulbButton addTarget:self action:@selector(scrollToNewIssue) forControlEvents:UIControlEventTouchUpInside];
+    [self.bulbButton addTarget:self action:@selector(scrollToNewIssue2) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)scrollToNewIssue
@@ -155,6 +160,126 @@
         currentIndexSelected = 0;
     else
         currentIndexSelected++;
+}
+
+
+- (void)scrollToNewIssue2
+{
+    /*
+     TODO: fix the increment value of currentIndexSelected: need to tap twice to go to next
+     */
+    
+    
+    int visibleIndexPathCount = (int)visibleNewIndexPaths.count - 1;
+    int indexPathsOfNewPostArrayCount = (int)indexPathsOfNewPostsArray.count - 1;
+    DDLogVerbose(@"currentIndexSelected %d",currentIndexSelected);
+    if(currentIndexSelected >= indexPathsOfNewPostArrayCount)
+        currentIndexSelected = 0;
+
+    
+    NSIndexPath *indexPathToGoTo = [indexPathsOfNewPostsArray objectAtIndex:currentIndexSelected];
+    
+    if(currentIndexSelected <= visibleIndexPathCount)
+    {
+        if(currentIndexSelected <= visibleIndexPathCount)
+            indexPathToGoTo = [visibleNewIndexPaths objectAtIndex:currentIndexSelected];
+    }
+    
+    else
+    {
+        if(visibleNewIndexPaths.count > 0)
+        {
+            int indexOfLastSelectedIndexPath = (int)[indexPathsOfNewPostsArray indexOfObject:_lastIndexPath] + 1;
+            
+            if(indexOfLastSelectedIndexPath > indexPathsOfNewPostArrayCount)
+                indexOfLastSelectedIndexPath = 0;
+            DDLogVerbose(@"indexOfLastSelectedIndexPath %d",indexOfLastSelectedIndexPath);
+            indexPathToGoTo = [indexPathsOfNewPostsArray objectAtIndex:indexOfLastSelectedIndexPath];
+        }
+        else
+        {
+            DDLogVerbose(@"go to nearest new indexpath below");
+            
+            NSIndexPath *lastVisibleIndexPath = [[self.issuesTable indexPathsForVisibleRows] lastObject];
+            int indexOfNearestIndexPathBelow = 0;
+            
+            for (int i = 0; i < self.issuesTable.numberOfSections; i++) {
+                
+                BOOL lastVisibleIndexPathFound = NO;
+                
+                for (int j = 0; j < [self.issuesTable numberOfRowsInSection:i]; j++) {
+
+                    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:j inSection:i];
+                    
+                    if(lastVisibleIndexPath == indexPath)
+                        lastVisibleIndexPathFound = YES;
+                    
+                    if(lastVisibleIndexPathFound == YES)
+                    {
+                        if([indexPathsOfNewPostsArray containsObject:indexPath])
+                        {
+                            indexOfNearestIndexPathBelow = (int)[indexPathsOfNewPostsArray indexOfObject:indexPath];
+                            DDLogVerbose(@"found");
+                            
+                            if(indexOfNearestIndexPathBelow >= indexPathsOfNewPostArrayCount)
+                                indexOfNearestIndexPathBelow = 0;
+                            
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            indexPathToGoTo = [indexPathsOfNewPostsArray objectAtIndex:indexOfNearestIndexPathBelow];
+        }
+        
+    }
+    
+    _lastIndexPath = indexPathToGoTo;
+    DDLogVerbose(@"goto index %lu",(unsigned long)[indexPathsOfNewPostsArray indexOfObject:indexPathToGoTo]);
+    DDLogVerbose(@"at indexpath %@",indexPathToGoTo);
+
+    //DDLogVerbose(@"got to indexpath %@",indexPathToGoTo);
+    [self.issuesTable openSection:indexPathToGoTo.section animated:YES];
+    [self.issuesTable scrollToRowAtIndexPath:indexPathToGoTo atScrollPosition:UITableViewScrollPositionTop animated:YES];
+    
+    [self.issuesTable selectRowAtIndexPath:indexPathToGoTo animated:YES scrollPosition:UITableViewScrollPositionNone];
+    
+    currentIndexSelected++;
+    DDLogVerbose(@"new currentIndexSelected %d",currentIndexSelected);
+    DDLogVerbose(@"------------------------------");
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    [visibleNewIndexPaths removeAllObjects];
+    
+    NSArray *visibleIndexPaths = [self.issuesTable indexPathsForVisibleRows];
+    
+    for (NSIndexPath *visibleIndexPath in visibleIndexPaths) {
+        if([indexPathsOfNewPostsArray containsObject:visibleIndexPath])
+            [visibleNewIndexPaths addObject:visibleIndexPath];
+    }
+}
+
+- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
+{
+    [visibleNewIndexPaths removeAllObjects];
+    
+    NSArray *visibleIndexPaths = [self.issuesTable indexPathsForVisibleRows];
+    
+    for (NSIndexPath *visibleIndexPath in visibleIndexPaths) {
+        if([indexPathsOfNewPostsArray containsObject:visibleIndexPath])
+            [visibleNewIndexPaths addObject:visibleIndexPath];
+    }
+    currentIndexSelected = 0;
+    DDLogVerbose(@"new indexpaths %@",visibleNewIndexPaths);
+}
+
+- (void)tableWasDragged
+{
+    currentIndexSelected = 0;
+    DDLogVerbose(@"was dragged");
 }
 
 
@@ -233,6 +358,8 @@
 
 - (IBAction)segmentControlChange:(id)sender
 {
+    [visibleNewIndexPaths removeAllObjects];
+    
     previouslyOpenSection = 0;
     
     int selectedSegment = (int)self.segment.selectedSegmentIndex;
@@ -779,7 +906,15 @@
 //                for (int i = 0; i < self.sectionHeaders.count; i++) {
 //                    [self.issuesTable openSection:i animated:NO];
 //                }
-              
+                
+                NSArray *visibleIndexPaths = [self.issuesTable indexPathsForVisibleRows];
+
+                for (NSIndexPath *visibleIndexPath in visibleIndexPaths) {
+                    if([indexPathsOfNewPostsArray containsObject:visibleIndexPath] == YES && [visibleNewIndexPaths containsObject:visibleIndexPath] == NO)
+                        [visibleNewIndexPaths addObject:visibleIndexPath];
+                }
+                DDLogVerbose(@"new indexpaths %@",visibleNewIndexPaths);
+                
                 _didFinishedFetching = YES;
             });
         }
